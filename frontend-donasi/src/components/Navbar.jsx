@@ -56,7 +56,7 @@ export default function Navbar() {
             : "bg-white border-slate-100 py-4"
         }`}
       >
-        <div className="container mx-auto px-4 max-w-6xl flex justify-between items-center">
+        <div className="w-full px-6 md:px-12 flex justify-between items-center">
           {/* Logo & Nama Yayasan */}
           <Link to="/" className="flex items-center gap-3 group text-left">
             <div className="p-1.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm group-hover:scale-105 transition-transform duration-300">
