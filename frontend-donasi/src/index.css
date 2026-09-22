@@ -54,17 +54,27 @@
   }
 }
 
+/* 🟢 Menjaga html & body agar melebar penuh ke semua sisi layar */
+html,
 body {
   margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--bg);
+  /* overflow-x: hidden; */
 }
 
+/* 🟢 MODIFIKASI UTAMA: Mengubah #root dari 1126px di tengah menjadi 100% full screen */
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  border: none;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -86,6 +96,7 @@ h1 {
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
@@ -95,6 +106,7 @@ h2 {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }
