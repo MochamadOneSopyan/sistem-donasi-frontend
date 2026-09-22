@@ -97,7 +97,7 @@ export default function Home() {
     {
       judul: "Bimbingan Tahfidz & Wisuda Santri",
       kategori: "Tahfidz",
-      img: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80",
+      img: "./src/assets/gambar-anak-1.jpeg",
     },
     {
       judul: "Pemeriksaan Kesehatan Gratis",
@@ -117,7 +117,7 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-emerald-500 selection:text-white">
+    <div className="w-full bg-slate-50 font-sans text-slate-800 selection:bg-emerald-500 selection:text-white">
       {/* 1. HERO BANNER SECTION */}
       <section
         id="beranda"
