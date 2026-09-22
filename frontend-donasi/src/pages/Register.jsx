@@ -11,6 +11,8 @@ import {
   Phone,
   MapPin,
   FileText,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import logoYayasan from "../assets/logo-yayasan.jpeg";
 
@@ -26,12 +28,24 @@ export default function Register() {
     alasan: "",
   });
 
+  // 🟢 State toggle visibilitas password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    // 🟢 Filter nomor telepon agar HANYA BISA ANGKA
+    if (name === "noHp") {
+      const onlyNums = value.replace(/\D/g, ""); // Hapus karakter non-digit
+      setFormData({ ...formData, [name]: onlyNums });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -180,15 +194,16 @@ export default function Register() {
           {/* Form Tambahan Khusus Penerima Bantuan */}
           {formData.role === "PENERIMA_BANTUAN" && (
             <>
-              {/* Nomor HP / WA */}
+              {/* Nomor HP / WA (HANYA ANGKA) */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Nomor Telepon / WA
+                  Nomor Telepon / WA (Angka)
                 </label>
                 <div className="relative">
                   <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
+                    inputMode="numeric" // Menampilkan keyboard angka di perangkat mobile
                     name="noHp"
                     placeholder="08123456789"
                     value={formData.noHp}
@@ -247,15 +262,27 @@ export default function Register() {
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // 🟢 Tipe input dinamis
                 name="password"
                 placeholder="Minimal 6 karakter"
                 value={formData.password}
                 onChange={handleChange}
                 required
                 minLength={6}
-                className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
+                className="w-full bg-slate-50 border border-slate-200 pl-10 pr-10 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
               />
+              {/* 🟢 Tombol Mata Show/Hide Password */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -267,14 +294,26 @@ export default function Register() {
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"} // 🟢 Tipe input dinamis
                 name="confirmPassword"
                 placeholder="Ulangi password di atas"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
+                className="w-full bg-slate-50 border border-slate-200 pl-10 pr-10 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
               />
+              {/* 🟢 Tombol Mata Show/Hide Konfirmasi Password */}
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 
