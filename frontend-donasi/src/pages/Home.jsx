@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import API from "../services/api";
 import ModalDonasi from "../components/ModalDonasi";
+import gambarAnak1 from "../assets/gambar-anak-1.jpeg";
+
 import {
   BookOpen,
   Heart,
@@ -97,7 +99,7 @@ export default function Home() {
     {
       judul: "Bimbingan Tahfidz & Wisuda Santri",
       kategori: "Tahfidz",
-      img: "./src/assets/gambar-anak-1.jpeg",
+      img: gambarAnak1,
     },
     {
       judul: "Pemeriksaan Kesehatan Gratis",
