@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API from "../services/api";
 import ModalDonasi from "../components/ModalDonasi";
-import gambarAnak1 from "../assets/gambar-anak-1.jpeg";
-
 import {
   BookOpen,
   Heart,
@@ -17,6 +15,7 @@ import {
   Image as GalleryIcon,
 } from "lucide-react";
 import logoYayasan from "../assets/logo-yayasan.jpeg";
+import gambarAnak1 from "../assets/gambar-anak-1.jpeg";
 
 export default function Home() {
   const [programs, setPrograms] = useState([]);

@@ -24,15 +24,19 @@ import {
   LogOut,
   Trash2,
   HeartHandshake,
+  Heart,
   Edit,
   TrendingUp,
   TrendingDown,
   Wallet,
+  Receipt,
+  Search,
+  Filter,
 } from "lucide-react";
 
 export default function DashboardAdmin() {
   const navigate = useNavigate();
-  // Active Menu: "verifikasi" | "penerima" | "donatur" | "pengurus" | "laporan"
+  // Active Menu: "verifikasi" | "program" | "donasi" | "penerima" | "donatur" | "pengurus" | "laporan"
   const [activeMenu, setActiveMenu] = useState("verifikasi");
 
   const [pengurusList, setPengurusList] = useState([]);
@@ -40,14 +44,26 @@ export default function DashboardAdmin() {
   const [penerimaList, setPenerimaList] = useState([]);
   const [penerimaPending, setPenerimaPending] = useState([]);
   const [programList, setProgramList] = useState([]);
+  const [donasiList, setDonasiList] = useState([]);
   const [loadingPending, setLoadingPending] = useState(false);
+  const [loadingDonasi, setLoadingDonasi] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [searchDonasi, setSearchDonasi] = useState("");
+  const [filterDonasiType, setFilterDonasiType] = useState("all"); // "all" | "terdaftar" | "anonim"
 
   // State Ringkasan Keuangan
   const [summaryKeuangan, setSummaryKeuangan] = useState({
     totalMasuk: 0,
     totalKeluar: 0,
     sisaSaldo: 0,
+  });
+
+  // State Modal Tambah Program Donasi
+  const [modalProgramOpen, setModalProgramOpen] = useState(false);
+  const [programForm, setProgramForm] = useState({
+    judul: "",
+    deskripsi: "",
+    targetDana: "",
   });
 
   // State Modal Tambah Pengurus
@@ -92,6 +108,7 @@ export default function DashboardAdmin() {
     fetchAllData();
     fetchProgram();
     fetchSummaryKeuangan();
+    fetchDaftarDonasi();
   }, []);
 
   const fetchAllData = () => {
@@ -99,6 +116,19 @@ export default function DashboardAdmin() {
     fetchDaftarPenerima();
     fetchDaftarDonatur();
     fetchPenerimaPending();
+    fetchDaftarDonasi();
+  };
+
+  const fetchDaftarDonasi = () => {
+    setLoadingDonasi(true);
+    API.get("/admin/donasi")
+      .then((res) => {
+        setDonasiList(res.data.data || []);
+      })
+      .catch((err) => {
+        console.error("Gagal mengambil daftar transaksi donasi:", err);
+      })
+      .finally(() => setLoadingDonasi(false));
   };
 
   const fetchSummaryKeuangan = () => {
@@ -244,6 +274,47 @@ export default function DashboardAdmin() {
     }
   };
 
+  const handleTambahProgram = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setLoading(true);
+    try {
+      await API.post("/program", {
+        judul: programForm.judul,
+        deskripsi: programForm.deskripsi,
+        targetDana: parseFloat(programForm.targetDana),
+      });
+      setSuccess("Program donasi baru berhasil dibuat!");
+      setModalProgramOpen(false);
+      setProgramForm({ judul: "", deskripsi: "", targetDana: "" });
+      fetchProgram();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Gagal membuat program donasi.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHapusProgram = async (id, judul) => {
+    if (!window.confirm(`Hapus program donasi "${judul}"?`)) return;
+    try {
+      await API.delete(`/program/${id}`);
+      setSuccess(`Program donasi "${judul}" berhasil dihapus.`);
+      fetchProgram();
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.error ||
+          "Gagal menghapus program.",
+      );
+    }
+  };
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
@@ -353,6 +424,40 @@ export default function DashboardAdmin() {
             </button>
 
             <button
+              onClick={() => setActiveMenu("program")}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 ${
+                activeMenu === "program"
+                  ? "bg-amber-400 text-emerald-950 shadow-md font-extrabold"
+                  : "text-emerald-100/80 hover:bg-emerald-900 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Heart className="w-4 h-4" />
+                <span>Program Donasi</span>
+              </div>
+              <span className="text-[10px] text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full">
+                {programList.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveMenu("donasi")}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 ${
+                activeMenu === "donasi"
+                  ? "bg-amber-400 text-emerald-950 shadow-md font-extrabold"
+                  : "text-emerald-100/80 hover:bg-emerald-900 hover:text-white"
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Receipt className="w-4 h-4" />
+                <span>Transaksi Donasi</span>
+              </div>
+              <span className="text-[10px] text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full font-bold">
+                {donasiList.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setActiveMenu("penerima")}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all duration-200 ${
                 activeMenu === "penerima"
@@ -436,6 +541,8 @@ export default function DashboardAdmin() {
             <h1 className="text-2xl font-black text-slate-900">
               {activeMenu === "verifikasi" &&
                 "Verifikasi Akun Penerima Bantuan"}
+              {activeMenu === "program" && "Manajemen Program Donasi"}
+              {activeMenu === "donasi" && "Riwayat Transaksi Donasi Masuk"}
               {activeMenu === "penerima" && "Daftar Penerima Bantuan"}
               {activeMenu === "donatur" && "Daftar Donatur Terdaftar"}
               {activeMenu === "pengurus" && "Manajemen Pengurus Yayasan"}
@@ -445,6 +552,19 @@ export default function DashboardAdmin() {
               Panel administrasi internal Yayasan Mulia Karya Bersama
             </p>
           </div>
+
+          {activeMenu === "program" && (
+            <button
+              onClick={() => {
+                setError("");
+                setSuccess("");
+                setModalProgramOpen(true);
+              }}
+              className="bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold px-4 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs uppercase tracking-wider"
+            >
+              <PlusCircle className="w-4 h-4" /> Tambah Program
+            </button>
+          )}
 
           {activeMenu === "pengurus" && (
             <button
@@ -602,6 +722,394 @@ export default function DashboardAdmin() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB PROGRAM: DAFTAR PROGRAM DONASI */}
+        {activeMenu === "program" && (
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden text-left">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-emerald-700" /> Semua Program Donasi
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Kelola program penggalangan dana dan target bantuan yayasan
+                </p>
+              </div>
+              <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full border border-emerald-100">
+                {programList.length} Program
+              </span>
+            </div>
+
+            {programList.length === 0 ? (
+              <div className="text-center py-16 px-4">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                  <Heart className="w-8 h-8" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-700">
+                  Belum Ada Program Donasi
+                </h4>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  Yayasan belum memiliki program donasi aktif. Klik tombol "+ Tambah Program" di pojok kanan atas untuk membuat program donasi baru.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-black text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-6">Judul Program</th>
+                      <th className="py-3 px-6">Target Dana</th>
+                      <th className="py-3 px-6">Terkumpul</th>
+                      <th className="py-3 px-6">Progress</th>
+                      <th className="py-3 px-6 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
+                    {programList.map((prog) => {
+                      const persen = Math.min(
+                        100,
+                        Math.round(
+                          ((prog.terkumpul || 0) / (prog.targetDana || 1)) * 100,
+                        ),
+                      );
+                      return (
+                        <tr
+                          key={prog.id}
+                          className="hover:bg-slate-50/60 transition"
+                        >
+                          <td className="py-4 px-6">
+                            <span className="font-extrabold text-slate-900 block text-xs">
+                              {prog.judul}
+                            </span>
+                            <span className="text-[11px] text-slate-400 line-clamp-1 mt-0.5 max-w-md">
+                              {prog.deskripsi}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 font-bold text-slate-800 whitespace-nowrap">
+                            Rp {(prog.targetDana || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="py-4 px-6 font-bold text-emerald-600 whitespace-nowrap">
+                            Rp {(prog.terkumpul || 0).toLocaleString("id-ID")}
+                          </td>
+                          <td className="py-4 px-6 whitespace-nowrap">
+                            <div className="w-28 bg-slate-100 rounded-full h-2 overflow-hidden mb-1">
+                              <div
+                                className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${persen}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500">
+                              {persen}% tercapai
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-center whitespace-nowrap">
+                            <button
+                              onClick={() => handleHapusProgram(prog.id, prog.judul)}
+                              className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 transition"
+                              title="Hapus Program"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB TRANSAKSI DONASI: DAFTAR TRANSAKSI DONASI LENGKAP & PELAKU TX */}
+        {activeMenu === "donasi" && (
+          <div className="space-y-6">
+            {/* STAT CHIPS */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Total Transaksi
+                  </span>
+                  <span className="text-lg font-black text-slate-900 mt-0.5 block">
+                    {donasiList.length} Transaksi
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                  <Receipt className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Donatur Terdaftar
+                  </span>
+                  <span className="text-lg font-black text-emerald-700 mt-0.5 block">
+                    {donasiList.filter((d) => d.donatur).length} Transaksi
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                  <HeartHandshake className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Donatur Anonim / Tamu
+                  </span>
+                  <span className="text-lg font-black text-amber-700 mt-0.5 block">
+                    {donasiList.filter((d) => !d.donatur).length} Transaksi
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                    Rata-rata Nominal
+                  </span>
+                  <span className="text-lg font-black text-teal-700 mt-0.5 block">
+                    Rp{" "}
+                    {donasiList.length > 0
+                      ? Math.round(
+                          donasiList.reduce(
+                            (acc, d) => acc + (d.jumlah || 0),
+                            0,
+                          ) / donasiList.length,
+                        ).toLocaleString("id-ID")
+                      : 0}
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold">
+                  <Wallet className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
+            {/* TABEL DATA TRANSAKSI */}
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden text-left">
+              <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-emerald-700" /> Seluruh
+                    Transaksi Donasi Masuk
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Data transaksi donasi real-time beserta informasi identitas
+                    donatur (pelaku transaksi)
+                  </p>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Cari donatur / program / metode..."
+                      value={searchDonasi}
+                      onChange={(e) => setSearchDonasi(e.target.value)}
+                      className="bg-slate-50 border border-slate-200 pl-8 pr-3 py-1.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition"
+                    />
+                  </div>
+
+                  <select
+                    value={filterDonasiType}
+                    onChange={(e) => setFilterDonasiType(e.target.value)}
+                    className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600 transition"
+                  >
+                    <option value="all">Semua Tipe Donatur</option>
+                    <option value="terdaftar">Donatur Terdaftar</option>
+                    <option value="anonim">Anonim / Publik</option>
+                  </select>
+
+                  <button
+                    onClick={fetchDaftarDonasi}
+                    className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-slate-100 rounded-xl transition text-xs font-bold"
+                    title="Refresh data"
+                  >
+                    <Clock className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Tabel Isi */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-600">
+                  <thead className="bg-slate-50 text-slate-700 uppercase font-black text-[10px] tracking-wider border-b border-slate-100">
+                    <tr>
+                      <th className="p-4">ID Transaksi</th>
+                      <th className="p-4">Pelaku Transaksi (Donatur)</th>
+                      <th className="p-4">Program Donasi</th>
+                      <th className="p-4">Nominal</th>
+                      <th className="p-4">Metode Bayar</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4">Waktu Transaksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {loadingDonasi ? (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className="p-8 text-center text-slate-400"
+                        >
+                          Memuat riwayat transaksi donasi...
+                        </td>
+                      </tr>
+                    ) : donasiList.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className="p-8 text-center text-slate-400 font-medium"
+                        >
+                          Belum ada transaksi donasi yang tercatat di sistem.
+                        </td>
+                      </tr>
+                    ) : (
+                      donasiList
+                        .filter((item) => {
+                          if (
+                            filterDonasiType === "terdaftar" &&
+                            !item.donatur
+                          )
+                            return false;
+                          if (filterDonasiType === "anonim" && item.donatur)
+                            return false;
+
+                          if (!searchDonasi.trim()) return true;
+                          const q = searchDonasi.toLowerCase();
+                          const donaturNama =
+                            item.donatur?.nama?.toLowerCase() || "";
+                          const donaturEmail =
+                            item.donatur?.email?.toLowerCase() || "";
+                          const progJudul =
+                            item.program?.judul?.toLowerCase() || "";
+                          const metode =
+                            item.metodePembayaran?.toLowerCase() || "";
+                          return (
+                            donaturNama.includes(q) ||
+                            donaturEmail.includes(q) ||
+                            progJudul.includes(q) ||
+                            metode.includes(q) ||
+                            String(item.id).includes(q)
+                          );
+                        })
+                        .map((item) => {
+                          const isTerdaftar = Boolean(item.donatur);
+                          return (
+                            <tr
+                              key={item.id}
+                              className="hover:bg-slate-50/80 transition"
+                            >
+                              <td className="p-4 font-mono font-bold text-slate-500 whitespace-nowrap">
+                                <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-black border border-slate-200">
+                                  #TRX-{String(item.id).padStart(3, "0")}
+                                </span>
+                              </td>
+
+                              <td className="p-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div
+                                    className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                                      isTerdaftar
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-amber-100 text-amber-800"
+                                    }`}
+                                  >
+                                    {isTerdaftar
+                                      ? item.donatur.nama
+                                          .charAt(0)
+                                          .toUpperCase()
+                                      : "H"}
+                                  </div>
+                                  <div>
+                                    <div className="font-extrabold text-slate-900 text-xs">
+                                      {isTerdaftar
+                                        ? item.donatur.nama
+                                        : "Hamba Allah"}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400">
+                                      {isTerdaftar
+                                        ? item.donatur.email
+                                        : "Donasi Publik / Tamu (Tanpa Akun)"}
+                                    </div>
+                                    <span
+                                      className={`inline-block mt-1 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                        isTerdaftar
+                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          : "bg-amber-50 text-amber-800 border border-amber-200"
+                                      }`}
+                                    >
+                                      {isTerdaftar
+                                        ? "Donatur Terdaftar"
+                                        : "Anonim"}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="p-4 max-w-xs">
+                                <span className="font-bold text-slate-800 block text-xs">
+                                  {item.program?.judul || "Program Yayasan"}
+                                </span>
+                              </td>
+
+                              <td className="p-4 whitespace-nowrap">
+                                <span className="font-black text-emerald-700 text-sm">
+                                  Rp{" "}
+                                  {(item.jumlah || 0).toLocaleString("id-ID")}
+                                </span>
+                              </td>
+
+                              <td className="p-4 whitespace-nowrap">
+                                <span className="bg-slate-100 text-slate-700 font-extrabold text-[10px] px-2.5 py-1 rounded-lg border border-slate-200 uppercase">
+                                  {item.metodePembayaran || "QRIS"}
+                                </span>
+                              </td>
+
+                              <td className="p-4 whitespace-nowrap">
+                                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 w-max">
+                                  <CheckCircle className="w-3 h-3 text-emerald-700" />
+                                  {item.status || "BERHASIL"}
+                                </span>
+                              </td>
+
+                              <td className="p-4 whitespace-nowrap text-slate-500">
+                                <div className="font-semibold text-slate-700">
+                                  {new Date(
+                                    item.createdAt,
+                                  ).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </div>
+                                <div className="text-[10px] text-slate-400">
+                                  {new Date(
+                                    item.createdAt,
+                                  ).toLocaleTimeString("id-ID", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}{" "}
+                                  WIB
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1426,6 +1934,103 @@ export default function DashboardAdmin() {
                   className="w-1/2 bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl text-xs transition"
                 >
                   {loading ? "Menyimpan..." : "Simpan Penyaluran"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL TAMBAH PROGRAM DONASI */}
+      {modalProgramOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in duration-200">
+            <div className="bg-gradient-to-r from-emerald-900 to-teal-950 p-6 text-white flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <PlusCircle className="w-5 h-5 text-amber-300" />
+                <div>
+                  <h3 className="font-extrabold text-sm tracking-tight">
+                    Tambah Program Donasi
+                  </h3>
+                  <p className="text-[11px] text-emerald-200/80">
+                    Buat kampanye program donasi yayasan baru
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setModalProgramOpen(false)}
+                className="text-emerald-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={handleTambahProgram}
+              className="p-6 space-y-4 text-xs font-bold text-slate-700"
+            >
+              <div>
+                <label className="block mb-1.5">Judul Program</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Santunan 100 Anak Yatim Dhuafa"
+                  value={programForm.judul}
+                  onChange={(e) =>
+                    setProgramForm({ ...programForm, judul: e.target.value })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1.5">Target Dana (Rp)</label>
+                <input
+                  type="number"
+                  required
+                  min="10000"
+                  placeholder="Contoh: 15000000"
+                  value={programForm.targetDana}
+                  onChange={(e) =>
+                    setProgramForm({
+                      ...programForm,
+                      targetDana: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1.5">Deskripsi Lengkap</label>
+                <textarea
+                  rows="3"
+                  required
+                  placeholder="Tuliskan tujuan dan peruntukan donasi ini..."
+                  value={programForm.deskripsi}
+                  onChange={(e) =>
+                    setProgramForm({
+                      ...programForm,
+                      deskripsi: e.target.value,
+                    })
+                  }
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setModalProgramOpen(false)}
+                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 font-bold transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-1/2 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl font-extrabold shadow-md transition"
+                >
+                  {loading ? "Menyimpan..." : "Simpan Program"}
                 </button>
               </div>
             </form>
