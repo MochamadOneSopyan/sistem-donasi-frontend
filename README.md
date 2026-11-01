@@ -27,7 +27,7 @@ Frontend ini dibuat dengan **React, Vite, dan Tailwind CSS**. Data akun, program
 
 ## Menjalankan secara lokal
 
-Pastikan **Node.js 20.19+ atau 22.12+** dan npm sudah terpasang. Jalankan perintah berikut dari root repo:
+Pastikan **Node.js 22** dan npm sudah terpasang. Jalankan perintah berikut dari folder `frontend-donasi/` yang berisi `package.json`:
 
 ```bash
 npm ci
@@ -71,13 +71,15 @@ npm run lint     # Periksa aturan ESLint
 
 ## Deployment
 
-Frontend dapat di-deploy sebagai situs statis, misalnya di Netlify atau Vercel.
+Frontend dapat di-deploy sebagai situs statis. Untuk repo tim ini, gunakan folder `frontend-donasi/` sebagai aplikasi yang di-deploy.
 
+- **Vercel Root Directory:** `frontend-donasi`
+- **Framework Preset:** Vite
 - **Build command:** `npm run build`
 - **Publish/output directory:** `dist`
-- **Environment variable:** isi `VITE_API_URL` dengan alamat backend yang dapat diakses publik.
+- **Environment variable:** isi `VITE_API_URL` dengan alamat HTTPS backend yang dapat diakses publik, termasuk `/api`.
 
-Untuk **Vercel**, konfigurasi route aplikasi sudah tersedia di `vercel.json`.
+Konfigurasi route aplikasi Vercel sudah tersedia di `vercel.json` dalam folder ini. Setelah mengubah `VITE_API_URL`, deploy ulang frontend agar alamat API baru masuk ke hasil build.
 
 Untuk **Netlify**, tambahkan file `public/_redirects` dengan isi berikut agar halaman seperti `/login` tetap terbuka saat di-refresh:
 
@@ -85,8 +87,10 @@ Untuk **Netlify**, tambahkan file `public/_redirects` dengan isi berikut agar ha
 /*  /index.html  200
 ```
 
-Repo ini juga memiliki salinan aplikasi di folder `frontend-donasi/`. Jika platform deployment diarahkan ke folder tersebut, jalankan perintah build dari folder itu dan gunakan `dist` sebagai outputnya.
+Repo ini juga memiliki salinan aplikasi di root. Gunakan pengaturan **Root Directory** di atas agar hanya satu salinan yang dipakai saat deploy.
 
 ## Catatan penggunaan
 
-Aplikasi ini memerlukan backend dan database yang aktif. Sebelum digunakan untuk menerima donasi sungguhan, pastikan penyimpanan bukti pembayaran bersifat permanen serta alur verifikasi pembayaran telah diuji pada lingkungan produksi.
+Aplikasi ini memerlukan backend dan database yang aktif. Jika halaman menampilkan kesalahan jaringan, cek `VITE_API_URL`, status backend, dan `CLIENT_URL` pada backend. Fitur lupa password memerlukan pengiriman email yang sudah dikonfigurasi di backend.
+
+Sebelum menerima donasi sungguhan, pastikan penyimpanan bukti pembayaran bersifat permanen serta alur verifikasi pembayaran telah diuji pada lingkungan produksi. Jangan masukkan kredensial rahasia ke variabel `VITE_*` karena nilainya dapat dilihat di browser.
