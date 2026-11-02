@@ -49,6 +49,7 @@ Buka alamat yang ditampilkan Vite, biasanya `http://localhost:5173`. Backend har
 | --- | --- |
 | `VITE_API_URL` | Alamat backend API, termasuk akhiran `/api`. |
 | `VITE_SITE_URL` | Opsional: alamat HTTPS publik untuk canonical URL dan sitemap. |
+| `VITE_DEMO_MODE` | Build produksi memakai mode demo secara default. Isi `true` untuk menutup formulir pembayaran secara eksplisit; `false` hanya setelah pembayaran siap. Aktifkan juga `DEMO_MODE=true` di backend selama demo. |
 
 Contoh untuk deployment:
 
@@ -73,21 +74,21 @@ npm run lint     # Periksa aturan ESLint
 
 Frontend dapat di-deploy sebagai situs statis. Untuk repo tim ini, gunakan folder `frontend-donasi/` sebagai aplikasi yang di-deploy.
 
-- **Vercel Root Directory:** `frontend-donasi`
+- **Root Directory:** `frontend-donasi`
 - **Framework Preset:** Vite
 - **Build command:** `npm run build`
 - **Publish/output directory:** `dist`
 - **Environment variable:** isi `VITE_API_URL` dengan alamat HTTPS backend yang dapat diakses publik, termasuk `/api`.
 
-Konfigurasi route aplikasi Vercel sudah tersedia di `vercel.json` dalam folder ini. Setelah mengubah `VITE_API_URL`, deploy ulang frontend agar alamat API baru masuk ke hasil build.
+Setelah mengubah `VITE_API_URL`, deploy ulang frontend agar alamat API baru masuk ke hasil build.
 
-Untuk **Netlify**, tambahkan file `public/_redirects` dengan isi berikut agar halaman seperti `/login` tetap terbuka saat di-refresh:
+Untuk **Netlify**, file `public/_redirects` sudah disediakan agar halaman seperti `/login` tetap terbuka saat di-refresh:
 
 ```text
 /*  /index.html  200
 ```
 
-Repo ini juga memiliki salinan aplikasi di root. Gunakan pengaturan **Root Directory** di atas agar hanya satu salinan yang dipakai saat deploy.
+Gunakan pengaturan **Root Directory** di atas saat deploy.
 
 ## Catatan penggunaan
 
