@@ -8,6 +8,6 @@ export const foundation = {
   email: "yayasanbina2025@gmail.com",
   facebook: "https://web.facebook.com/people/Yayasan-Mulia-Karya-Bersama/61594462259553/",
   instagram: "https://www.instagram.com/yayasanmuliakaryabersama/",
-  bank: "BSI (Bank Syariah Indonesia)",
-  account: "7123 828 547",
+  bank: "Bank Muamalat",
+  account: "3360 015 244",
 };
