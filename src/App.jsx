@@ -19,6 +19,7 @@ const DashboardAdmin = lazy(() => import("./pages/DashboardAdmin"));
 import DashboardDonatur from "./pages/DashboardDonatur";
 import DashboardPenerima from "./pages/DashboardPenerima";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { STAFF_ROLES } from "./utils/roles";
 import { scrollToPublicSection } from "./utils/scrollToPublicSection";
 import { bersihkanCacheBuktiLama } from "./utils/imageCompressor";
 
@@ -84,7 +85,7 @@ function MainLayout() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute roles={["PENGURUS"]}>
+              <ProtectedRoute roles={STAFF_ROLES}>
                 <Suspense fallback={<div className="public-ui ds-container py-12" role="status">Memuat panel pengurus…</div>}>
                   <DashboardAdmin />
                 </Suspense>

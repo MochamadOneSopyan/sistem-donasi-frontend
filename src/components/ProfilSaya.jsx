@@ -25,12 +25,7 @@ import {
   getStoredUser,
   setStoredUser,
 } from "../utils/format";
-
-const ROLE_LABEL = {
-  PENGURUS: "Pengurus Yayasan",
-  DONATUR: "Donatur",
-  PENERIMA_BANTUAN: "Penerima Bantuan",
-};
+import { ROLE_LABELS as ROLE_LABEL } from "../utils/roles";
 
 const inputCls =
   "w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all disabled:opacity-60";

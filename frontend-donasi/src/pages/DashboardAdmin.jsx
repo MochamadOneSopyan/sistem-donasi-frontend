@@ -65,6 +65,14 @@ import {
   hapusBuktiDonasi,
   getAvatarUrl,
 } from "../utils/imageCompressor";
+import {
+  ROLE_LABELS,
+  ASSIGNABLE_STAFF_ROLES,
+  STAFF_ROLES,
+  can,
+  canSeeMenu,
+  firstMenuFor,
+} from "../utils/roles";
 
 export default function DashboardAdmin() {
   const navigate = useNavigate();
@@ -76,8 +84,9 @@ export default function DashboardAdmin() {
     return () => window.removeEventListener("user-updated", handleUserUpdate);
   }, []);
 
-  // Active Menu: "verifikasi" | "program" | "donasi" | "penerima" | "donatur" | "pengurus" | "laporan"
-  const [activeMenu, setActiveMenu] = useState("verifikasi");
+  const userRole = currentUser?.role || "ADMIN_SISTEM";
+  // Active Menu disesuaikan dengan hak akses jabatan (RBAC)
+  const [activeMenu, setActiveMenu] = useState(() => firstMenuFor(getStoredUser()?.role));
 
   const [pengurusList, setPengurusList] = useState([]);
   const [donaturList, setDonaturList] = useState([]);
@@ -87,8 +96,8 @@ export default function DashboardAdmin() {
   const [programLoading, setProgramLoading] = useState(true);
   const [programError, setProgramError] = useState("");
   const [donasiList, setDonasiList] = useState([]);
-  const [loadingPending, setLoadingPending] = useState(true);
-  const [loadingDonasi, setLoadingDonasi] = useState(true);
+  const [loadingPending, setLoadingPending] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_PENERIMA"));
+  const [loadingDonasi, setLoadingDonasi] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_DONASI"));
   const [loading, setLoading] = useState(false);
   const [searchDonasi, setSearchDonasi] = useState("");
   const [filterDonasiType, setFilterDonasiType] = useState("all"); // "all" | "terdaftar" | "anonim"
@@ -108,7 +117,7 @@ export default function DashboardAdmin() {
 
   // State Pengajuan Bantuan
   const [pengajuanList, setPengajuanList] = useState([]);
-  const [loadingPengajuan, setLoadingPengajuan] = useState(true);
+  const [loadingPengajuan, setLoadingPengajuan] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_PENGAJUAN"));
   const [pengajuanError, setPengajuanError] = useState("");
   const [filterPengajuan, setFilterPengajuan] = useState("MENUNGGU");
   const [searchPengajuan, setSearchPengajuan] = useState("");
@@ -175,6 +184,7 @@ export default function DashboardAdmin() {
     nama: "",
     email: "",
     password: "",
+    role: "ADMIN_SISTEM",
   });
 
   useEffect(() => {
@@ -185,18 +195,24 @@ export default function DashboardAdmin() {
         .catch((err) => { if (active) onError?.(err); })
         .finally(() => { if (active) onDone?.(); });
     };
-    load("/admin/pengurus", (data) => setPengurusList(data || []));
-    load("/admin/penerima", (data) => setPenerimaList(data || []));
-    load("/admin/donatur", (data) => setDonaturList(data || []));
-    load("/admin/penerima-pending", (data) => setPenerimaPending(data || []), null, () => setLoadingPending(false));
-    load("/admin/pengajuan", (data) => setPengajuanList(data || []), (err) => setPengajuanError(getErrorMessage(err, "Gagal mengambil data pengajuan bantuan.")), () => setLoadingPengajuan(false));
-    load("/admin/donasi", (data) => setDonasiList(data || []), null, () => setLoadingDonasi(false));
+    if (can(userRole, "KELOLA_PENGGUNA")) load("/admin/pengurus", (data) => setPengurusList(data || []));
+    if (can(userRole, "LIHAT_PENERIMA")) {
+      load("/admin/penerima", (data) => setPenerimaList(data || []));
+      load("/admin/penerima-pending", (data) => setPenerimaPending(data || []), null, () => setLoadingPending(false));
+    }
+    if (can(userRole, "LIHAT_DONATUR")) load("/admin/donatur", (data) => setDonaturList(data || []));
+    if (can(userRole, "LIHAT_PENGAJUAN")) {
+      load("/admin/pengajuan", (data) => setPengajuanList(data || []), (err) => setPengajuanError(getErrorMessage(err, "Gagal mengambil data pengajuan bantuan.")), () => setLoadingPengajuan(false));
+    }
+    if (can(userRole, "LIHAT_DONASI")) {
+      load("/admin/donasi", (data) => setDonasiList(data || []), null, () => setLoadingDonasi(false));
+    }
     load("/program", (data) => setProgramList(data || []), (err) => setProgramError(getErrorMessage(err, "Gagal mengambil daftar program.")), () => setProgramLoading(false));
     load("/admin/summary-keuangan", (data) => {
       if (data) setSummaryKeuangan({ totalMasuk: data.totalMasuk || 0, totalKeluar: data.totalKeluar || 0, sisaSaldo: data.sisaSaldo || 0, donasiPending: data.donasiPending || 0 });
     });
     return () => { active = false; };
-  }, []);
+  }, [userRole]);
 
   const fetchAllData = () => {
     fetchDaftarPengurus();
@@ -758,7 +774,7 @@ export default function DashboardAdmin() {
     try {
       await API.post("/admin/pengurus", formData);
       setSuccess("Akun pengurus baru berhasil ditambahkan!");
-      setFormData({ nama: "", email: "", password: "" });
+      setFormData({ nama: "", email: "", password: "", role: "ADMIN_SISTEM" });
       fetchDaftarPengurus();
       setTimeout(() => {
         setModalOpen(false);
@@ -871,7 +887,7 @@ export default function DashboardAdmin() {
               Menu Utama
             </div>
 
-            <button
+            {canSeeMenu(userRole, "verifikasi") && (<button
               onClick={() => setActiveMenu("verifikasi")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "verifikasi"
@@ -888,9 +904,9 @@ export default function DashboardAdmin() {
                   {penerimaPending.length}
                 </span>
               )}
-            </button>
+            </button>)}
 
-            <button
+            {canSeeMenu(userRole, "pengajuan") && (<button
               onClick={() => setActiveMenu("pengajuan")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "pengajuan"
@@ -907,9 +923,9 @@ export default function DashboardAdmin() {
                   {pengajuanMenungguCount}
                 </span>
               )}
-            </button>
+            </button>)}
 
-            <button
+            {canSeeMenu(userRole, "program") && (<button
               onClick={() => setActiveMenu("program")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "program"
@@ -924,9 +940,9 @@ export default function DashboardAdmin() {
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">
                 {programList.length}
               </span>
-            </button>
+            </button>)}
 
-            <button
+            {canSeeMenu(userRole, "donasi") && (<button
               onClick={() => setActiveMenu("donasi")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "donasi"
@@ -947,13 +963,13 @@ export default function DashboardAdmin() {
                   {donasiList.length}
                 </span>
               )}
-            </button>
+            </button>)}
 
             <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-3 pt-4 pb-1.5 text-left">
               Data &amp; Anggota
             </div>
 
-            <button
+            {canSeeMenu(userRole, "penerima") && (<button
               onClick={() => setActiveMenu("penerima")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "penerima"
@@ -968,9 +984,9 @@ export default function DashboardAdmin() {
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">
                 {penerimaList.length}
               </span>
-            </button>
+            </button>)}
 
-            <button
+            {canSeeMenu(userRole, "donatur") && (<button
               onClick={() => setActiveMenu("donatur")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "donatur"
@@ -985,9 +1001,9 @@ export default function DashboardAdmin() {
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">
                 {donaturList.length}
               </span>
-            </button>
+            </button>)}
 
-            <button
+            {canSeeMenu(userRole, "pengurus") && (<button
               onClick={() => setActiveMenu("pengurus")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "pengurus"
@@ -1002,13 +1018,13 @@ export default function DashboardAdmin() {
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">
                 {pengurusList.length}
               </span>
-            </button>
+            </button>)}
 
             <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-3 pt-4 pb-1.5 text-left">
               Analitik &amp; Akun
             </div>
 
-            <button
+            {canSeeMenu(userRole, "laporan") && (<button
               onClick={() => setActiveMenu("laporan")}
               className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors cursor-pointer text-left ${
                 activeMenu === "laporan"
@@ -1020,7 +1036,7 @@ export default function DashboardAdmin() {
                 <BarChart3 className={`w-4 h-4 ${activeMenu === "laporan" ? "text-emerald-700" : "text-slate-400"}`} />
                 <span>Laporan &amp; Analitik</span>
               </div>
-            </button>
+            </button>)}
 
             <button
               onClick={() => setActiveMenu("profil")}
@@ -1055,8 +1071,8 @@ export default function DashboardAdmin() {
                 <p className="text-xs font-semibold text-slate-800 truncate leading-tight">
                   {currentUser.nama || "Admin Yayasan"}
                 </p>
-                <p className="text-[10px] text-slate-400 truncate">
-                  Pengurus
+                <p className="text-[10px] text-emerald-700 font-semibold truncate">
+                  {ROLE_LABELS[userRole] || "Pengurus"}
                 </p>
               </div>
             </div>
@@ -2090,6 +2106,7 @@ export default function DashboardAdmin() {
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Nama Pengurus</th>
+                    <th className="py-3 px-4">Jabatan / Role</th>
                     <th className="py-3 px-4">Alamat Email</th>
                     <th className="py-3 px-4">Tanggal Dibuat</th>
                     <th className="py-3 px-4 text-center">Aksi</th>
@@ -2114,6 +2131,11 @@ export default function DashboardAdmin() {
                           </div>
                           <span>{p.nama}</span>
                         </td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/70">
+                            {ROLE_LABELS[p.role] || p.role}
+                          </span>
+                        </td>
                         <td className="py-3.5 px-4 font-medium text-slate-600">
                           {p.email}
                         </td>
@@ -2132,7 +2154,7 @@ export default function DashboardAdmin() {
                                   id: p.id,
                                   nama: p.nama,
                                   email: p.email,
-                                  role: "PENGURUS",
+                                  role: p.role || "ADMIN_SISTEM",
                                 });
                                 setError("");
                                 setEditModalOpen(true);
@@ -2248,7 +2270,7 @@ export default function DashboardAdmin() {
                   <span>Unduh Excel</span>
                 </button>
 
-                <button
+                {can(userRole, "KELOLA_PENYALURAN") && (<button
                   onClick={() => {
                     setPenyaluranError("");
                     setPenyaluranForm({
@@ -2263,7 +2285,7 @@ export default function DashboardAdmin() {
                   className="dashboard-button dashboard-button-primary dashboard-button-compact"
                 >
                   <span>+ Catat Penyaluran</span>
-                </button>
+                </button>)}
               </div>
             </div>
 
@@ -2545,7 +2567,7 @@ export default function DashboardAdmin() {
                   <p className="text-xs text-emerald-200/80">
                     Ada bantuan baru yang siap diserahkan?
                   </p>
-                  <button
+                  {can(userRole, "KELOLA_PENYALURAN") && (<button
                     onClick={() => {
                       setPenyaluranError("");
                       setPenyaluranForm({
@@ -2560,7 +2582,7 @@ export default function DashboardAdmin() {
                     className="dashboard-button dashboard-button-primary dashboard-button-compact"
                   >
                     + Catat Penyaluran
-                  </button>
+                  </button>)}
                 </div>
               </div>
 
@@ -2722,6 +2744,24 @@ export default function DashboardAdmin() {
                     className="w-full bg-slate-50 border border-slate-200 pl-10 pr-4 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Jabatan / Role Pengurus
+                </label>
+                <select
+                  name="role"
+                  value={formData.role || "ADMIN_SISTEM"}
+                  onChange={handleChange}
+                  className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
+                >
+                  {ASSIGNABLE_STAFF_ROLES.map((r) => (
+                    <option key={r} value={r}>
+                      {ROLE_LABELS[r] || r}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -2899,6 +2939,27 @@ export default function DashboardAdmin() {
                   className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600"
                 />
               </div>
+
+              {STAFF_ROLES.includes(editFormData.role) && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Jabatan / Role Pengurus
+                  </label>
+                  <select
+                    value={editFormData.role || "ADMIN_SISTEM"}
+                    onChange={(e) =>
+                      setEditFormData({ ...editFormData, role: e.target.value })
+                    }
+                    className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600"
+                  >
+                    {ASSIGNABLE_STAFF_ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABELS[r] || r}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {editFormData.role === "PENERIMA_BANTUAN" && (
                 <>
@@ -3340,7 +3401,7 @@ export default function DashboardAdmin() {
 
               {/* FOOTER ACTIONS */}
               <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2 shrink-0">
-                {isPending ? (
+                {isPending && can(userRole, "VERIFIKASI_DONASI") ? (
                   <>
                     <button
                       type="button"
@@ -3508,7 +3569,7 @@ export default function DashboardAdmin() {
               <footer className="admin-review-footer">
                 {menunggu && <p>{confirmPengajuanStatus === "DISETUJUI" ? `Setujui pengajuan #${p.id}? Penyaluran dana dicatat terpisah.` : confirmPengajuanStatus === "DITOLAK" ? `Tolak pengajuan #${p.id}? Alasan akan terlihat oleh pemohon.` : "Menyetujui pengajuan belum mencatat penyaluran dana."}</p>}
                 <div className="admin-review-actions">
-                  {menunggu ? (
+                  {menunggu && can(userRole, "VERIFIKASI_PENGAJUAN") ? (
                     confirmPengajuanStatus ? (
                     <>
                       <button type="button" onClick={() => setConfirmPengajuanStatus(null)} disabled={verifyingPengajuan} className="dashboard-button dashboard-button-secondary">Kembali</button>
@@ -3537,7 +3598,7 @@ export default function DashboardAdmin() {
                     )
                   ) : (
                     <>
-                      {p.status === "DISETUJUI" && (
+                      {p.status === "DISETUJUI" && can(userRole, "KELOLA_PENYALURAN") && (
                         <button
                           onClick={() => bukaPenyaluranDariPengajuan(p)}
                           className="dashboard-button dashboard-button-primary"
@@ -3600,7 +3661,7 @@ export default function DashboardAdmin() {
                         <span className="text-rose-600 font-semibold">Profil penerima tidak ditemukan</span>
                       )}
                     </div>
-                    {pb && (
+                    {pb && can(userRole, "KELOLA_PENERIMA") && (
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleUbahStatusPenerima(u, "DISETUJUI")}

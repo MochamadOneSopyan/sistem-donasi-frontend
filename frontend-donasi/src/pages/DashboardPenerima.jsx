@@ -505,7 +505,7 @@ export default function DashboardPenerima() {
 
           {activeApplication && (
             <p className="px-6 pt-4 text-xs text-slate-600">
-              Anda masih memiliki pengajuan yang menunggu. Batalkan pengajuan #{activeApplication.id} jika ingin mengajukan bantuan lain.
+              Anda masih memiliki pengajuan yang menunggu (<strong>{parseJudulPengajuan(activeApplication.judul).judul}</strong>). Batalkan pengajuan tersebut jika ingin mengajukan bantuan lain.
             </p>
           )}
 
@@ -765,7 +765,7 @@ export default function DashboardPenerima() {
       )}
       {cancelTarget && <Dialog title="Batalkan pengajuan bantuan" onClose={() => { if (!canceling) { setCancelTarget(null); setCancelError(""); } }} className="member-modal">
         <div className="ds-dialog-body text-left">
-          <p>Batalkan pengajuan <strong>#{cancelTarget.id} · {parseJudulPengajuan(cancelTarget.judul).judul}</strong>? Pengajuan yang dibatalkan tidak akan diperiksa lebih lanjut, tetapi tetap tercatat dalam riwayat Anda.</p>
+          <p>Batalkan pengajuan <strong>{parseJudulPengajuan(cancelTarget.judul).judul}</strong>? Pengajuan yang dibatalkan tidak akan diperiksa lebih lanjut, tetapi tetap tercatat dalam riwayat Anda.</p>
           <Notice type="error" message={cancelError} />
           <div className="recipient-confirm-actions">
             <button type="button" className="dashboard-button dashboard-button-secondary" disabled={canceling} onClick={() => { setCancelTarget(null); setCancelError(""); }}>Kembali</button>
@@ -792,7 +792,7 @@ function DetailPengajuanModal({ pengajuan, penyaluranList, onClose, onCancel }) 
             <X className="w-5 h-5" />
           </button>
           <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-300">
-            Pengajuan #{pengajuan.id} · {jenis}
+            Pengajuan Bantuan · {jenis}
           </span>
           <h3 className="text-lg font-black mt-0.5 pr-6">{judul}</h3>
         </div>

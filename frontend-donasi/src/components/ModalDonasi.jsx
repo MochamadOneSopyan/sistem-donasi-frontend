@@ -16,8 +16,7 @@ import {
 import qrisImage from "../assets/qris-yayasan.jpeg";
 import { compressImage } from "../utils/imageCompressor";
 
-const demoMode = import.meta.env.VITE_DEMO_MODE === "true" ||
-  (import.meta.env.PROD && import.meta.env.VITE_DEMO_MODE !== "false");
+const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 export default function ModalDonasi({
   program,

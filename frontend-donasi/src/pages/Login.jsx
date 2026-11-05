@@ -4,6 +4,7 @@ import { AuthLayout } from "../components/PublicUI";
 import Notice from "../components/Notice";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import PasswordField from "../components/PasswordField";
+import { homePathFor } from "../utils/roles";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -24,13 +25,7 @@ export default function Login() {
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       // Pengarahan halaman sesuai role user
-      if (res.data.user.role === "PENGURUS") {
-        navigate("/admin");
-      } else if (res.data.user.role === "PENERIMA_BANTUAN") {
-        navigate("/penerima");
-      } else {
-        navigate("/donatur");
-      }
+      navigate(homePathFor(res.data.user.role));
     } catch (err) {
       setError(
         err.response?.data?.message ||

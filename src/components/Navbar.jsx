@@ -5,6 +5,7 @@ import logoYayasan from "../assets/logo-yayasan.png";
 import { publicNavigationItems } from "../data/publicNavigation";
 import { getAvatarUrl } from "../utils/imageCompressor";
 import { scrollToPublicSection } from "../utils/scrollToPublicSection";
+import { isStaffRole } from "../utils/roles";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -177,7 +178,7 @@ export default function Navbar() {
                 );
               })}
 
-              {user.role === "PENGURUS" && (
+              {isStaffRole(user.role) && (
                 <Link
                   to="/admin"
                 aria-current={location.pathname === "/admin" ? "page" : undefined}
@@ -301,7 +302,7 @@ export default function Navbar() {
                 );
               })}
 
-              {user.role === "PENGURUS" && (
+              {isStaffRole(user.role) && (
                 <Link
                   to="/admin"
                 aria-current={location.pathname === "/admin" ? "page" : undefined}

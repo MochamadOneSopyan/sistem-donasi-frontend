@@ -31,7 +31,7 @@ export default function AssistanceFlow({ application, disbursements = [], onDeta
   return <section className={`recipient-flow${compact ? " recipient-flow--compact" : ""}`} aria-label={`Alur pengajuan ${judul}`}>
     <div className="recipient-flow-heading">
       <div>
-        <span className="recipient-flow-eyebrow">Alur pengajuan #{application.id}</span>
+        <span className="recipient-flow-eyebrow">Alur pengajuan bantuan</span>
         <h2>{judul}</h2>
         <p role="status">{summary}</p>
       </div>

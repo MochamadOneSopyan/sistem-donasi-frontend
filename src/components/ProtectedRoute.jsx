@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getStoredUser } from "../utils/format";
+import { homePathFor } from "../utils/roles";
 
 // Decode payload JWT (tanpa verifikasi signature — verifikasi tetap di backend)
 const decodeToken = (token) => {
@@ -11,12 +12,6 @@ const decodeToken = (token) => {
   } catch {
     return null;
   }
-};
-
-const HOME_BY_ROLE = {
-  PENGURUS: "/admin",
-  DONATUR: "/donatur",
-  PENERIMA_BANTUAN: "/penerima",
 };
 
 // Membatasi halaman dashboard sesuai role. Ini hanya lapisan UI;
@@ -40,7 +35,7 @@ export default function ProtectedRoute({ roles, children }) {
   // Role diambil dari token (lebih sulit dimanipulasi daripada localStorage)
   const role = payload.role || user.role;
   if (roles && !roles.includes(role)) {
-    return <Navigate to={HOME_BY_ROLE[role] || "/"} replace />;
+    return <Navigate to={homePathFor(role)} replace />;
   }
 
   return children;
