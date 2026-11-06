@@ -90,7 +90,7 @@
 .about-values span { display: block; color: var(--about-orange); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .about-values dt { margin: 4px 0; color: var(--about-deep); font-size: clamp(18px, 2.6vh, 24px); font-weight: 800; letter-spacing: -.02em; }
 .about-values dd { margin: 0; color: var(--about-ink); font-size: 13px; line-height: 1.5; }
-.about-photo-panel { position: relative; isolation: isolate; display: flex; min-height: 0; flex-direction: column; justify-content: space-between; overflow: hidden; padding: clamp(28px, 5vh, 52px) 48px clamp(24px, 4vh, 40px); color: var(--surface-card); background-color: var(--about-deep); background-position: center; background-size: cover; }
+.about-photo-panel { position: relative; isolation: isolate; display: flex; min-height: 0; flex-direction: column; justify-content: space-between; overflow: hidden; padding: clamp(28px, 5vh, 52px) 48px clamp(24px, 4vh, 40px); color: var(--surface-card); background-color: var(--about-deep); background-image: url("../assets/galeri-santunan.webp"); background-position: center; background-size: cover; }
 .about-photo-panel::before { position: absolute; z-index: -1; inset: 0; content: ""; background: linear-gradient(180deg, rgba(19, 49, 37, .55), rgba(19, 49, 37, .92)); }
 .about-photo-panel .ds-eyebrow { margin: 0; color: #a9cdb9; font-size: 12px; letter-spacing: .16em; }
 .about-photo-panel h3 { max-width: 440px; margin-top: 12px; color: var(--surface-card); font-size: clamp(24px, calc(3.4vh + .6vw), 38px); font-weight: 800; line-height: 1.12; letter-spacing: -.03em; }

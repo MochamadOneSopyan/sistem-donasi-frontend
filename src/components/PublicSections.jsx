@@ -10,8 +10,30 @@ import gambarPemberdayaan from "../assets/galeri-pemberdayaan.webp";
 import gambarPengajian from "../assets/galeri-pengajian.webp";
 import gambarRelawan from "../assets/galeri-relawan.webp";
 import gambarPenyaluran from "../assets/galeri-penyaluran.webp";
+import gambarHafalanPutri from "../assets/galeri-hafalan-putri.webp";
+import gambarHafalanPutra from "../assets/galeri-hafalan-putra.webp";
+import gambarKebersamaanSantri from "../assets/galeri-kebersamaan-santri.webp";
 import TransparencyDashboard from "./TransparencyDashboard";
 import ProgramImage from "./ProgramImage";
+
+function resolveProgramCover(program) {
+  if (typeof program?.imageUrl === "string" && program.imageUrl.trim().length > 0) {
+    return program.imageUrl;
+  }
+  const text = `${program?.judul || ""} ${program?.deskripsi || ""}`.toLowerCase();
+  if (text.includes("tahfidz") || text.includes("qur'an") || text.includes("quran") || text.includes("pendidikan")) {
+    return gambarTahfidz;
+  }
+  if (text.includes("yatim") || text.includes("santunan") || text.includes("dhuafa")) {
+    return gambarSantunan;
+  }
+  if (text.includes("pangan") || text.includes("sembako") || text.includes("lansia") || text.includes("ramadhan")) {
+    return gambarPenyaluran;
+  }
+  const fallbackPool = [gambarPenyaluran, gambarSantunan, gambarTahfidz, gambarPengajian];
+  const idx = Math.abs(Number(program?.id) || 0) % fallbackPool.length;
+  return fallbackPool[idx];
+}
 
 const pillars = [
   { title: "Pendidikan & Tahfidz Al-Qur'an", description: "Program bimbingan hafalan dan pemahaman Al-Qur'an secara terstruktur bagi santri dan generasi muda.", icon: BookOpen, tag: "Pendidikan Qur'an" },
@@ -36,7 +58,7 @@ const galleryItems = [
   {
     tag: "Pemberdayaan",
     title: "Pelatihan Usaha untuk Masyarakat",
-    description: "Pendampingan keterampilan usaha agar masyarakat dapat membangun kemandirian ekonomi.",
+    description: "Pendampingan keterampilan dan pembinaan generasi muda agar tumbuh mandiri serta berdaya.",
     image: gambarPemberdayaan,
   },
   {
@@ -48,14 +70,32 @@ const galleryItems = [
   {
     tag: "Gotong Royong",
     title: "Aksi Bersama Relawan",
-    description: "Warga dan relawan bekerja bersama merawat lingkungan dan saling membantu.",
+    description: "Pengurus dan relawan mendampingi kegiatan belajar serta pembinaan karakter santri.",
     image: gambarRelawan,
   },
   {
     tag: "Penyaluran",
-    title: "Penyaluran Bantuan ke Warga",
-    description: "Penyerahan bantuan kebutuhan sehari-hari kepada keluarga di lingkungan masyarakat.",
+    title: "Penyaluran Bantuan & Gebyar Ramadhan",
+    description: "Kebersamaan pengurus dan masyarakat dalam berbagi kebaikan di bulan penuh berkah.",
     image: gambarPenyaluran,
+  },
+  {
+    tag: "Pembinaan",
+    title: "Latihan Hafalan & Doa Santriwati",
+    description: "Melatih keberanian santriwati dalam membacakan hafalan Al-Qur'an dan doa di depan umum.",
+    image: gambarHafalanPutri,
+  },
+  {
+    tag: "Kaderisasi",
+    title: "Penampilan Hafalan Santri Putra",
+    description: "Membangun kepercayaan diri dan akhlak santri putra melalui praktik dakwah sejak dini.",
+    image: gambarHafalanPutra,
+  },
+  {
+    tag: "Kebersamaan",
+    title: "Keluarga Besar Santri Binaan",
+    description: "Suasana hangat kebersamaan para santri dalam kegiatan rutin bimbingan belajar dan mengaji.",
+    image: gambarKebersamaanSantri,
   },
 ];
 
@@ -63,7 +103,7 @@ function ProgramDetails({ program, programs, onClose, onDonate, onSelect }) {
   const reports = program.penyaluranBantuan || [];
   return <Dialog title={program.judul} onClose={onClose} className="program-detail">
     <div className="ds-dialog-body">
-      <ProgramImage imageUrl={program.imageUrl} title={program.judul} className="program-detail-image" loading="eager" />
+      <ProgramImage imageUrl={resolveProgramCover(program)} title={program.judul} className="program-detail-image" loading="eager" />
       <span className="ds-badge">Program donasi</span>
       {program.createdAt && <p className="ds-help"><Calendar size={14} /> Dibuat {formatTanggal(program.createdAt)}</p>}
       <p className="program-description-full">{program.deskripsi}</p>
@@ -228,7 +268,7 @@ export default function PublicSections({ programs, loading, programError, onRetr
         {loading ? <LoadingCards label="Memuat program donasi" /> : programError ? <div className="ds-card"><Notice type="error" message={programError} /><button className="ds-button ds-button-secondary" onClick={onRetryPrograms}>Coba lagi</button></div> : filtered.length === 0 ? <EmptyState title={query ? "Program tidak ditemukan" : "Belum ada program donasi"} action={query && <button className="ds-button ds-button-secondary" onClick={() => setQuery("")}>Hapus pencarian</button>}>{query ? "Coba gunakan kata kunci lain." : "Program donasi akan ditampilkan di sini saat tersedia."}</EmptyState> : <>
           <div id="program-track" ref={programTrackRef} className="program-track" role="region" aria-label="Daftar program donasi, geser ke kanan atau kiri" tabIndex={0} onScroll={updateScrollState}>
           {filtered.map((program) => <article className="ds-card program-card" key={program.id}>
-            <ProgramImage imageUrl={program.imageUrl} title={program.judul} className="program-cover" />
+            <ProgramImage imageUrl={resolveProgramCover(program)} title={program.judul} className="program-cover" />
             <div className="program-card-body"><span className="ds-badge">Program donasi</span><h3><button onClick={() => setDetailId(program.id)}>{program.judul}</button></h3><p className="program-excerpt">{program.deskripsi}</p><ProgramProgress program={program} /><div className="program-card-actions"><button className="ds-button ds-button-primary" onClick={() => onDonate(program)}>Donasi Sekarang</button><button className="ds-button ds-button-secondary" onClick={() => setDetailId(program.id)} aria-label={`Lihat detail ${program.judul}`}>Detail <ArrowRight size={16} /></button></div></div>
           </article>)}
           </div>
