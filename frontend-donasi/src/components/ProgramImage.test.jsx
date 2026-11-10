@@ -45,6 +45,42 @@ test("gambar yang sama muncul pada kartu dan detail program", () => {
   expect(screen.getAllByAltText(`Gambar program ${program.judul}`)).toHaveLength(2);
 });
 
+test("program tanpa imageUrl memilih gambar cover yang sesuai judul program", () => {
+  const seededPrograms = [
+    {
+      id: 1,
+      judul: "Bantuan Pangan Lansia 2026",
+      deskripsi: "Program pengadaan paket sembako untuk lansia kurang mampu.",
+      targetDana: 10_000_000,
+      terkumpul: 3_160_000,
+    },
+    {
+      id: 2,
+      judul: "Santunan Yatim & Dhuafa",
+      deskripsi: "Program bantuan biaya pendidikan, kebutuhan pokok, dan perlengkapan sekolah bagi anak-anak yatim serta keluarga dhuafa.",
+      targetDana: 15_000_000,
+      terkumpul: 7_020_000,
+    },
+    {
+      id: 3,
+      judul: "Pendidikan & Tahfidz Al-Qur'an",
+      deskripsi: "Bantuan fasilitasi pembelajaran, kitab Al-Qur'an, dan beasiswa untuk santri penghafal Al-Qur'an.",
+      targetDana: 20_000_000,
+      terkumpul: 620_000,
+    },
+  ];
+  render(<MemoryRouter><PublicSections programs={seededPrograms} loading={false} programError="" onRetryPrograms={() => {}} transparansi={null} loadingTransparansi={false} transparencyError="" onRetryTransparency={() => {}} onDonate={() => {}} /></MemoryRouter>);
+
+  const imgPangan = screen.getByAltText("Gambar program Bantuan Pangan Lansia 2026").getAttribute("src");
+  const imgSantunan = screen.getByAltText("Gambar program Santunan Yatim & Dhuafa").getAttribute("src");
+  const imgTahfidz = screen.getByAltText("Gambar program Pendidikan & Tahfidz Al-Qur'an").getAttribute("src");
+
+  expect(imgSantunan).toContain("galeri-santunan");
+  expect(imgTahfidz).toContain("galeri-tahfidz");
+  expect(imgPangan).toContain("galeri-penyaluran");
+  expect(imgSantunan).not.toBe(imgTahfidz);
+});
+
 test("realisasi Transparansi menampilkan program dan progres dari data", () => {
   const data = {
     totalTerhimpun: 0,

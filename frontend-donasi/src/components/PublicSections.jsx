@@ -16,20 +16,35 @@ import gambarKebersamaanSantri from "../assets/galeri-kebersamaan-santri.webp";
 import TransparencyDashboard from "./TransparencyDashboard";
 import ProgramImage from "./ProgramImage";
 
-function resolveProgramCover(program) {
-  if (typeof program?.imageUrl === "string" && program.imageUrl.trim().length > 0) {
-    return program.imageUrl;
-  }
-  const text = `${program?.judul || ""} ${program?.deskripsi || ""}`.toLowerCase();
-  if (text.includes("tahfidz") || text.includes("qur'an") || text.includes("quran") || text.includes("pendidikan")) {
-    return gambarTahfidz;
-  }
+function matchProgramCover(text) {
   if (text.includes("yatim") || text.includes("santunan") || text.includes("dhuafa")) {
     return gambarSantunan;
+  }
+  if (text.includes("tahfidz") || text.includes("qur'an") || text.includes("quran") || text.includes("pendidikan") || text.includes("santri")) {
+    return gambarTahfidz;
   }
   if (text.includes("pangan") || text.includes("sembako") || text.includes("lansia") || text.includes("ramadhan")) {
     return gambarPenyaluran;
   }
+  if (text.includes("pemberdayaan") || text.includes("usaha") || text.includes("ekonomi")) {
+    return gambarPemberdayaan;
+  }
+  if (text.includes("pengajian") || text.includes("kajian") || text.includes("dakwah") || text.includes("akhlak")) {
+    return gambarPengajian;
+  }
+  return null;
+}
+
+function resolveProgramCover(program) {
+  if (typeof program?.imageUrl === "string" && program.imageUrl.trim().length > 0) {
+    return program.imageUrl;
+  }
+  const byTitle = matchProgramCover((program?.judul || "").toLowerCase());
+  if (byTitle) return byTitle;
+
+  const byDescription = matchProgramCover((program?.deskripsi || "").toLowerCase());
+  if (byDescription) return byDescription;
+
   const fallbackPool = [gambarPenyaluran, gambarSantunan, gambarTahfidz, gambarPengajian];
   const idx = Math.abs(Number(program?.id) || 0) % fallbackPool.length;
   return fallbackPool[idx];

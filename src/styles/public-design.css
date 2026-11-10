@@ -196,7 +196,7 @@
 .gallery-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); width: min(100%, 1320px); min-height: 0; height: clamp(560px, 68svh, 650px); margin-inline: auto; }
 .gallery-stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; background: #133125; }
 .gallery-stage::after { position: absolute; inset: 0; content: ""; pointer-events: none; background: linear-gradient(180deg, transparent 55%, #133125b3); }
-.gallery-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: gallery-image-enter 520ms ease-out both; }
+.gallery-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; animation: gallery-image-enter 520ms ease-out both; }
 @keyframes gallery-image-enter { from { opacity: .55; } to { opacity: 1; } }
 .gallery-image-error { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; color: #fff; text-align: center; }
 .gallery-view { position: absolute; z-index: 1; bottom: 32px; left: 32px; display: inline-flex; align-items: center; gap: 10px; min-height: 46px; padding: 11px 22px; border-radius: 999px; background: #fff; color: #133125; font-size: 14px; font-weight: 700; }
@@ -218,7 +218,7 @@
 .gallery-thumbnails { display: flex; gap: 10px; overflow-x: auto; padding: 2px; scrollbar-width: thin; }
 .gallery-thumbnail { position: relative; flex: 0 0 min(92px, calc((100% - 50px) / 6)); min-width: 56px; height: 64px; overflow: hidden; padding: 0; border: 2px solid transparent; border-radius: 12px; background: #eef4f0; opacity: .6; }
 .gallery-thumbnail.is-active { border-color: #e08a3c; opacity: 1; }
-.gallery-thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 42%; }
 .gallery-thumbnail span { position: absolute; right: 4px; bottom: 4px; padding: 1px 5px; border-radius: 5px; background: #133125cf; color: #fff; font-size: 11px; font-weight: 700; }
 .assistance-section { display: flex; align-items: center; border-top: 1px solid var(--line); background: var(--surface-tinted); color: var(--ink); }
 .public-content > .assistance-section { min-height: calc(100svh - 80px); padding-block: clamp(64px, 8vh, 120px); }
