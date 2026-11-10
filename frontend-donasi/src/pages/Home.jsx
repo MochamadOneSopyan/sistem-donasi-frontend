@@ -118,13 +118,13 @@ export default function Home() {
             </p>
 
             <div className="hero-actions">
-              <a href="#program" className="hero-button hero-button-primary">
+              <a href="#donasi" className="hero-button hero-button-primary">
                 <HandHeart className="h-5 w-5" aria-hidden="true" />
-                Pelajari Program Unggulan
+                Salurkan Donasi
               </a>
               <a href="#program" className="hero-button hero-button-secondary">
                 <Compass className="h-5 w-5 text-emerald-200" aria-hidden="true" />
-                Eksplorasi Program
+                Kenali Kegiatan Kami
               </a>
             </div>
 

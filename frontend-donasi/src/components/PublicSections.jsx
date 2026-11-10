@@ -4,8 +4,8 @@ import { ArrowLeft, ArrowRight, BookOpen, Users, Award, Sparkles, HandHeart, Sea
 import { SectionHeading, EmptyState, LoadingCards, ProgramProgress, Dialog } from "./PublicUI";
 import Notice from "./Notice";
 import { formatRupiah, formatTanggal } from "../utils/format";
-import gambarTahfidz from "../assets/galeri-tahfidz.webp";
-import gambarSantunan from "../assets/galeri-santunan.webp";
+import gambarTahfidz from "../assets/galeri-tahfidz-quran.webp";
+import gambarSantunan from "../assets/galeri-santunan-yatim.webp";
 import gambarPemberdayaan from "../assets/galeri-pemberdayaan.webp";
 import gambarPengajian from "../assets/galeri-pengajian.webp";
 import gambarRelawan from "../assets/galeri-relawan.webp";
@@ -36,10 +36,17 @@ function matchProgramCover(text) {
 }
 
 function resolveProgramCover(program) {
+  const titleText = (program?.judul || "").toLowerCase();
+  if (titleText.includes("yatim") || titleText.includes("santunan") || titleText.includes("dhuafa")) {
+    return gambarSantunan;
+  }
+  if (titleText.includes("tahfidz") || titleText.includes("qur'an") || titleText.includes("quran") || titleText.includes("pendidikan")) {
+    return gambarTahfidz;
+  }
   if (typeof program?.imageUrl === "string" && program.imageUrl.trim().length > 0) {
     return program.imageUrl;
   }
-  const byTitle = matchProgramCover((program?.judul || "").toLowerCase());
+  const byTitle = matchProgramCover(titleText);
   if (byTitle) return byTitle;
 
   const byDescription = matchProgramCover((program?.deskripsi || "").toLowerCase());
