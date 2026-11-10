@@ -36,9 +36,85 @@
 }
 
 .hero-intro { min-width: 0; padding-top: 16px; }
-.hero-bismillah { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 28px; }
-.hero-arabic { font-family: Amiri, 'Traditional Arabic', serif; font-size: 32px; line-height: 1.4; color: #fcd34d; }
-.hero-bismillah-caption { font-size: 15px; line-height: 1.6; color: #b9d9cd; }
+.hero-bismillah {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: min(100%, clamp(360px, 41vw, 586px));
+  gap: 2px;
+  margin-bottom: 16px;
+  animation: bismillah-enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-arabic {
+  display: block;
+  width: 100%;
+  padding: 12px 0 2px;
+  margin-bottom: -4px;
+  font-family: Amiri, "Traditional Arabic", serif;
+  font-size: clamp(38px, 4.75vw, 68px);
+  font-weight: 400;
+  line-height: 1.22;
+  word-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+  color: #f4ba42;
+  background: linear-gradient(
+    110deg,
+    #f4ba42 0%,
+    #f4ba42 38%,
+    #fde68a 50%,
+    #f4ba42 62%,
+    #f4ba42 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: bismillah-sheen 6s ease-in-out infinite;
+}
+
+.hero-bismillah-caption {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #a9cdb9;
+}
+
+.hero-bismillah-caption::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(244, 186, 66, 0.55), rgba(169, 205, 185, 0.12));
+}
+
+@keyframes bismillah-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bismillah-sheen {
+  0%,
+  20% {
+    background-position: 100% 50%;
+  }
+  80%,
+  100% {
+    background-position: 0% 50%;
+  }
+}
 
 .home-hero .hero-title {
   margin: 0;
@@ -183,9 +259,9 @@
 }
 @media (max-width: 639px) {
   .hero-layout { padding: 0 20px; }
-  .hero-bismillah { margin-bottom: 24px; gap: 8px; }
-  .hero-arabic { font-size: 29px; }
-  .hero-bismillah-caption { font-size: 12px; }
+  .hero-bismillah { margin-bottom: 14px; gap: 2px; }
+  .hero-arabic { font-size: clamp(28px, 8.2vw, 36px); }
+  .hero-bismillah-caption { font-size: 11px; }
   .home-hero .hero-title { font-size: clamp(27px, 7.6vw, 42px); line-height: 1.15; }
   .hero-description { font-size: 14px; margin-top: 24px; }
   .hero-actions { flex-direction: column; margin-top: 28px; }
@@ -197,5 +273,5 @@
   .public-navbar--forest .navbar-container { padding-left: 20px; padding-right: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .home-hero *, .public-navbar--forest * { transition: none !important; }
+  .home-hero *, .public-navbar--forest * { animation: none !important; transition: none !important; }
 }

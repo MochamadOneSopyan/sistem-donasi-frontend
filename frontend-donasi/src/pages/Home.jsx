@@ -100,7 +100,7 @@ export default function Home() {
                 dir="rtl"
                 lang="ar"
               >
-                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                بِسْــمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيــمِ
               </span>
               <span className="hero-bismillah-caption">
                 Mengawali niat tulus berbagi
