@@ -1,3 +1,4 @@
+import PaginatedTable from "../components/PaginatedTable";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
@@ -74,6 +75,10 @@ import {
   firstMenuFor,
 } from "../utils/roles";
 
+function PermissionButton({ role, permission, ...props }) {
+  return can(role, permission) ? <button {...props} /> : null;
+}
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(getStoredUser());
@@ -84,9 +89,10 @@ export default function DashboardAdmin() {
     return () => window.removeEventListener("user-updated", handleUserUpdate);
   }, []);
 
-  const userRole = currentUser?.role || "ADMIN_SISTEM";
+  const userRole = currentUser?.role || "";
   // Active Menu disesuaikan dengan hak akses jabatan (RBAC)
-  const [activeMenu, setActiveMenu] = useState(() => firstMenuFor(getStoredUser()?.role));
+  const [selectedMenu, setActiveMenu] = useState(() => firstMenuFor(getStoredUser()?.role));
+  const activeMenu = canSeeMenu(userRole, selectedMenu) ? selectedMenu : firstMenuFor(userRole);
 
   const [pengurusList, setPengurusList] = useState([]);
   const [donaturList, setDonaturList] = useState([]);
@@ -96,8 +102,8 @@ export default function DashboardAdmin() {
   const [programLoading, setProgramLoading] = useState(true);
   const [programError, setProgramError] = useState("");
   const [donasiList, setDonasiList] = useState([]);
-  const [loadingPending, setLoadingPending] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_PENERIMA"));
-  const [loadingDonasi, setLoadingDonasi] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_DONASI"));
+  const [loadingPending, setLoadingPending] = useState(() => can(getStoredUser()?.role || "", "LIHAT_PENERIMA"));
+  const [loadingDonasi, setLoadingDonasi] = useState(() => can(getStoredUser()?.role || "", "LIHAT_DONASI"));
   const [loading, setLoading] = useState(false);
   const [searchDonasi, setSearchDonasi] = useState("");
   const [filterDonasiType, setFilterDonasiType] = useState("all"); // "all" | "terdaftar" | "anonim"
@@ -117,7 +123,7 @@ export default function DashboardAdmin() {
 
   // State Pengajuan Bantuan
   const [pengajuanList, setPengajuanList] = useState([]);
-  const [loadingPengajuan, setLoadingPengajuan] = useState(() => can(getStoredUser()?.role || "ADMIN_SISTEM", "LIHAT_PENGAJUAN"));
+  const [loadingPengajuan, setLoadingPengajuan] = useState(() => can(getStoredUser()?.role || "", "LIHAT_PENGAJUAN"));
   const [pengajuanError, setPengajuanError] = useState("");
   const [filterPengajuan, setFilterPengajuan] = useState("MENUNGGU");
   const [searchPengajuan, setSearchPengajuan] = useState("");
@@ -184,7 +190,7 @@ export default function DashboardAdmin() {
     nama: "",
     email: "",
     password: "",
-    role: "ADMIN_SISTEM",
+    role: "",
   });
 
   useEffect(() => {
@@ -224,6 +230,7 @@ export default function DashboardAdmin() {
   };
 
   const fetchPengajuan = () => {
+    if (!can(userRole, "assistance.view")) return;
     setLoadingPengajuan(true);
     setPengajuanError("");
     API.get("/admin/pengajuan")
@@ -265,6 +272,7 @@ export default function DashboardAdmin() {
   const donasiPendingCount = donasiList.filter((d) => d.status === "PENDING").length;
 
   const fetchDaftarDonasi = () => {
+    if (!can(userRole, "donation.view")) return;
     setLoadingDonasi(true);
     API.get("/admin/donasi")
       .then((res) => {
@@ -303,24 +311,28 @@ export default function DashboardAdmin() {
   };
 
   const fetchDaftarPengurus = () => {
+    if (!can(userRole, "user.view")) return;
     API.get("/admin/pengurus")
       .then((res) => setPengurusList(res.data.data || []))
       .catch((err) => console.error("Gagal mengambil daftar pengurus:", err));
   };
 
   const fetchDaftarPenerima = () => {
+    if (!can(userRole, "recipient.view")) return;
     API.get("/admin/penerima")
       .then((res) => setPenerimaList(res.data.data || []))
       .catch((err) => console.error("Gagal mengambil daftar penerima:", err));
   };
 
   const fetchDaftarDonatur = () => {
+    if (!can(userRole, "donor.view")) return;
     API.get("/admin/donatur")
       .then((res) => setDonaturList(res.data.data || []))
       .catch((err) => console.error("Gagal mengambil daftar donatur:", err));
   };
 
   const fetchPenerimaPending = () => {
+    if (!can(userRole, "recipient.view")) return;
     setLoadingPending(true);
     API.get("/admin/penerima-pending")
       .then((res) => setPenerimaPending(res.data.data || []))
@@ -470,6 +482,7 @@ export default function DashboardAdmin() {
   };
 
   const handleAdminUploadBukti = async (e) => {
+    if (!can(userRole, "donation.proof.manage")) return;
     setAdminUploadError("");
     const file = e.target.files?.[0];
     if (!file || !detailDonasi) return;
@@ -503,6 +516,7 @@ export default function DashboardAdmin() {
   };
 
   const handleHapusBuktiAdmin = async () => {
+    if (!can(userRole, "donation.proof.manage")) return;
     if (!detailDonasi) return;
     try {
       await API.delete(`/donasi/${detailDonasi.id}/bukti`);
@@ -518,6 +532,7 @@ export default function DashboardAdmin() {
   // Verifikasi transaksi donasi (PENDING -> BERHASIL / GAGAL).
   // Saldo program hanya bertambah di backend saat status BERHASIL.
   const handleVerifikasiDonasi = async (item, status) => {
+    if (!can(userRole, "donation.verify")) return;
     if (verifyingDonasiId) return; // cegah klik ganda / proses paralel
     if (item.status !== "PENDING") {
       showNotice("error", `Transaksi ini sudah diverifikasi (${item.status}).`);
@@ -557,6 +572,7 @@ export default function DashboardAdmin() {
 
   // Verifikasi pengajuan bantuan (MENUNGGU -> DISETUJUI / DITOLAK)
   const handleVerifikasiPengajuan = async (status) => {
+    if (!can(userRole, "assistance.decide")) return;
     if (!detailPengajuan || verifyLock.current) return;
     if (detailPengajuan.status !== "MENUNGGU") {
       setCatatanError("Pengajuan ini sudah diverifikasi dan tidak dapat diproses ulang.");
@@ -602,6 +618,7 @@ export default function DashboardAdmin() {
 
   // Ubah status akun penerima (AKTIF = DISETUJUI, NONAKTIF = DITOLAK)
   const handleUbahStatusPenerima = async (penerimaUser, status) => {
+    if (!can(userRole, "assistance.verify")) return;
     const pb = penerimaUser?.penerimaBantuan;
     if (!pb || updatingStatusPenerima) return;
     if (pb.status === status) return;
@@ -652,6 +669,7 @@ export default function DashboardAdmin() {
   };
 
   const handleVerifikasiPenerima = async (id, status) => {
+    if (!can(userRole, "assistance.verify")) return;
     if (
       status === "DITOLAK" &&
       !window.confirm("Tolak pendaftaran akun penerima bantuan ini?")
@@ -670,6 +688,7 @@ export default function DashboardAdmin() {
   };
 
   const handleHapusUser = async (id, nama) => {
+    if (!can(userRole, "user.delete")) return;
     if (window.confirm(`Apakah Anda yakin ingin menghapus akun ${nama}?`)) {
       try {
         const res = await API.delete(`/admin/user/${id}`);
@@ -682,6 +701,7 @@ export default function DashboardAdmin() {
   };
 
   const handleEditSubmit = async (e) => {
+    if (!can(userRole, "user.update")) return;
     e.preventDefault();
     setError("");
     const email = (editFormData.email || "").trim().toLowerCase();
@@ -767,6 +787,7 @@ export default function DashboardAdmin() {
 
   const handleTambahPengurus = async (e) => {
     e.preventDefault();
+    if (!can(userRole, "user.create") || !can(userRole, "user.role.assign")) return;
     setError("");
     setSuccess("");
     setLoading(true);
@@ -774,7 +795,7 @@ export default function DashboardAdmin() {
     try {
       await API.post("/admin/pengurus", formData);
       setSuccess("Akun pengurus baru berhasil ditambahkan!");
-      setFormData({ nama: "", email: "", password: "", role: "ADMIN_SISTEM" });
+      setFormData({ nama: "", email: "", password: "", role: "" });
       fetchDaftarPengurus();
       setTimeout(() => {
         setModalOpen(false);
@@ -790,6 +811,7 @@ export default function DashboardAdmin() {
   };
 
   const handleHapusProgram = async (id, judul) => {
+    if (!can(userRole, "program.delete")) return;
     if (!window.confirm(`Hapus program donasi "${judul}"?`)) return;
     try {
       const response = await API.delete(`/program/${id}`);
@@ -805,6 +827,7 @@ export default function DashboardAdmin() {
   };
 
   const handleResetPassword = async (e) => {
+    if (!can(userRole, "user.password.reset")) return;
     e.preventDefault();
     if (!selectedUser) return;
 
@@ -834,6 +857,7 @@ export default function DashboardAdmin() {
   };
 
   const downloadLaporan = async (type) => {
+    if (!can(userRole, "report.export")) return;
     try {
       const response = await API.get(`/laporan/${type}`, {
         responseType: "blob",
@@ -1118,7 +1142,7 @@ export default function DashboardAdmin() {
 
           <div className="flex items-center gap-2.5">
             {activeMenu === "program" && (
-              <button
+              <PermissionButton role={userRole} permission="program.create"
                 onClick={() => {
                   setError("");
                   setSuccess("");
@@ -1129,11 +1153,11 @@ export default function DashboardAdmin() {
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>Tambah Program</span>
-              </button>
+              </PermissionButton>
             )}
 
             {activeMenu === "pengurus" && (
-              <button
+              <PermissionButton role={userRole} permission="user.create"
                 onClick={() => {
                   setError("");
                   setSuccess("");
@@ -1143,7 +1167,7 @@ export default function DashboardAdmin() {
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Tambah Pengurus</span>
-              </button>
+              </PermissionButton>
             )}
           </div>
         </div>
@@ -1178,7 +1202,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Nama Lengkap</th>
@@ -1232,7 +1256,7 @@ export default function DashboardAdmin() {
                         </td>
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="flex items-center justify-center gap-2">
-                            <button
+                            <PermissionButton role={userRole} permission="assistance.verify"
                               onClick={() =>
                                 handleVerifikasiPenerima(item.id, "DISETUJUI")
                               }
@@ -1240,8 +1264,8 @@ export default function DashboardAdmin() {
                             >
                               <CheckCircle className="w-3.5 h-3.5" />
                               <span>Setujui</span>
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="assistance.verify"
                               onClick={() =>
                                 handleVerifikasiPenerima(item.id, "DITOLAK")
                               }
@@ -1249,14 +1273,14 @@ export default function DashboardAdmin() {
                             >
                               <XCircle className="w-3.5 h-3.5" />
                               <span>Tolak</span>
-                            </button>
+                            </PermissionButton>
                           </div>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           </div>
         )}
@@ -1297,7 +1321,7 @@ export default function DashboardAdmin() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <PaginatedTable><table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       <th className="py-3 px-4">Judul Program</th>
@@ -1360,28 +1384,28 @@ export default function DashboardAdmin() {
                             </span>
                           </td>
                           <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                            <button
+                            <PermissionButton role={userRole} permission="program.update"
                               onClick={() => { setError(""); setSuccess(""); setEditingProgram(prog); setModalProgramOpen(true); }}
                               className="dashboard-icon-button"
                               title={`Edit ${prog.judul}`}
                               aria-label={`Edit ${prog.judul}`}
                             >
                               <Edit className="w-4 h-4" />
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="program.delete"
                               onClick={() => handleHapusProgram(prog.id, prog.judul)}
                               disabled={(prog.donasi?.length || 0) > 0 || (prog.penyaluranBantuan?.length || 0) > 0}
                               className="dashboard-icon-button dashboard-icon-button-danger"
                               title={(prog.donasi?.length || 0) > 0 || (prog.penyaluranBantuan?.length || 0) > 0 ? "Tidak dapat dihapus karena memiliki riwayat donasi atau penyaluran" : "Hapus Program"}
                             >
                               <Trash2 className="w-4 h-4" />
-                            </button>
+                            </PermissionButton>
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
-                </table>
+                </table></PaginatedTable>
               </div>
             )}
           </div>
@@ -1463,7 +1487,7 @@ export default function DashboardAdmin() {
             {/* TABEL DATA TRANSAKSI */}
             <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden text-left">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600">
+                <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                     <tr>
                       <th className="py-3 px-4">ID Transaksi</th>
@@ -1657,7 +1681,7 @@ export default function DashboardAdmin() {
                         })
                     )}
                   </tbody>
-                </table>
+                </table></PaginatedTable>
               </div>
             </div>
           </div>
@@ -1709,7 +1733,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">ID</th>
@@ -1798,13 +1822,13 @@ export default function DashboardAdmin() {
                                 <span>{p.status === "MENUNGGU" ? "Periksa" : "Detail"}</span>
                               </button>
                               {p.status === "DISETUJUI" && (
-                                <button
+                                <PermissionButton role={userRole} permission="assistance.distribute"
                                   onClick={() => bukaPenyaluranDariPengajuan(p)}
                                   className="dashboard-button dashboard-button-primary dashboard-button-compact"
                                   title="Catat penyaluran dana untuk pengajuan ini"
                                 >
                                   <span>+ Salurkan</span>
-                                </button>
+                                </PermissionButton>
                               )}
                             </div>
                           </td>
@@ -1813,7 +1837,7 @@ export default function DashboardAdmin() {
                     });
                   })()}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           </div>
         )}
@@ -1852,7 +1876,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Nama Lengkap</th>
@@ -1929,7 +1953,7 @@ export default function DashboardAdmin() {
                               >
                                 <Eye className="w-3.5 h-3.5" /> <span>Detail</span>
                               </button>
-                              <button
+                              <PermissionButton role={userRole} permission="user.update"
                                 onClick={() => {
                                   setEditFormData({
                                     id: item.id,
@@ -1946,8 +1970,8 @@ export default function DashboardAdmin() {
                                 className="dashboard-button dashboard-button-secondary dashboard-button-compact"
                               >
                                 <Edit className="w-3.5 h-3.5" /> <span>Edit</span>
-                              </button>
-                              <button
+                              </PermissionButton>
+                              <PermissionButton role={userRole} permission="user.password.reset"
                                 onClick={() => {
                                   setSelectedUser(item);
                                   setError("");
@@ -1958,8 +1982,8 @@ export default function DashboardAdmin() {
                                 className="dashboard-button dashboard-button-secondary dashboard-button-compact"
                               >
                                 <KeyRound className="w-3.5 h-3.5" /> <span>Reset Pass</span>
-                              </button>
-                              <button
+                              </PermissionButton>
+                              <PermissionButton role={userRole} permission="user.delete"
                                 onClick={() =>
                                   handleHapusUser(item.id, item.nama)
                                 }
@@ -1967,7 +1991,7 @@ export default function DashboardAdmin() {
                                 title="Hapus Penerima"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              </PermissionButton>
                             </div>
                           </td>
                         </tr>
@@ -1975,7 +1999,7 @@ export default function DashboardAdmin() {
                     })
                   )}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           </div>
         )}
@@ -1999,7 +2023,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Nama Donatur</th>
@@ -2036,7 +2060,7 @@ export default function DashboardAdmin() {
                         </td>
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
-                            <button
+                            <PermissionButton role={userRole} permission="user.update"
                               onClick={() => {
                                 setEditFormData({
                                   id: d.id,
@@ -2051,8 +2075,8 @@ export default function DashboardAdmin() {
                               title="Edit Donatur"
                             >
                               <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="user.password.reset"
                               onClick={() => {
                                 setSelectedUser(d);
                                 setError("");
@@ -2064,21 +2088,21 @@ export default function DashboardAdmin() {
                               title="Reset Password"
                             >
                               <KeyRound className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="user.delete"
                               onClick={() => handleHapusUser(d.id, d.nama)}
                               className="dashboard-icon-button dashboard-icon-button-danger"
                               title="Hapus Donatur"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </PermissionButton>
                           </div>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           </div>
         )}
@@ -2102,7 +2126,7 @@ export default function DashboardAdmin() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Nama Pengurus</th>
@@ -2148,13 +2172,13 @@ export default function DashboardAdmin() {
                         </td>
                         <td className="py-3.5 px-4 text-center whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
-                            <button
+                            <PermissionButton role={userRole} permission="user.update"
                               onClick={() => {
                                 setEditFormData({
                                   id: p.id,
                                   nama: p.nama,
                                   email: p.email,
-                                  role: p.role || "ADMIN_SISTEM",
+                                  role: p.role || "",
                                 });
                                 setError("");
                                 setEditModalOpen(true);
@@ -2163,8 +2187,8 @@ export default function DashboardAdmin() {
                               title="Edit Pengurus"
                             >
                               <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="user.password.reset"
                               onClick={() => {
                                 setSelectedUser(p);
                                 setError("");
@@ -2176,21 +2200,21 @@ export default function DashboardAdmin() {
                               title="Reset Password"
                             >
                               <KeyRound className="w-3.5 h-3.5" />
-                            </button>
-                            <button
+                            </PermissionButton>
+                            <PermissionButton role={userRole} permission="user.delete"
                               onClick={() => handleHapusUser(p.id, p.nama)}
                               className="dashboard-icon-button dashboard-icon-button-danger"
                               title="Hapus Pengurus"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </PermissionButton>
                           </div>
                         </td>
                       </tr>
                     ))
                   )}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           </div>
         )}
@@ -2254,23 +2278,23 @@ export default function DashboardAdmin() {
                   <span>Cetak</span>
                 </button>
 
-                <button
+                <PermissionButton role={userRole} permission="report.export"
                   onClick={() => downloadLaporan("pdf")}
                   className="dashboard-button dashboard-button-secondary dashboard-button-compact"
                 >
                   <FileText className="w-3.5 h-3.5 text-rose-500" />
                   <span>Unduh PDF</span>
-                </button>
+                </PermissionButton>
 
-                <button
+                <PermissionButton role={userRole} permission="report.export"
                   onClick={() => downloadLaporan("excel")}
                   className="dashboard-button dashboard-button-secondary dashboard-button-compact"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Unduh Excel</span>
-                </button>
+                </PermissionButton>
 
-                {can(userRole, "KELOLA_PENYALURAN") && (<button
+                <PermissionButton role={userRole} permission="KELOLA_PENYALURAN"
                   onClick={() => {
                     setPenyaluranError("");
                     setPenyaluranForm({
@@ -2285,7 +2309,7 @@ export default function DashboardAdmin() {
                   className="dashboard-button dashboard-button-primary dashboard-button-compact"
                 >
                   <span>+ Catat Penyaluran</span>
-                </button>)}
+                </PermissionButton>
               </div>
             </div>
 
@@ -2567,7 +2591,7 @@ export default function DashboardAdmin() {
                   <p className="text-xs text-emerald-200/80">
                     Ada bantuan baru yang siap diserahkan?
                   </p>
-                  {can(userRole, "KELOLA_PENYALURAN") && (<button
+                  <PermissionButton role={userRole} permission="KELOLA_PENYALURAN"
                     onClick={() => {
                       setPenyaluranError("");
                       setPenyaluranForm({
@@ -2582,7 +2606,7 @@ export default function DashboardAdmin() {
                     className="dashboard-button dashboard-button-primary dashboard-button-compact"
                   >
                     + Catat Penyaluran
-                  </button>)}
+                  </PermissionButton>
                 </div>
               </div>
 
@@ -2752,10 +2776,12 @@ export default function DashboardAdmin() {
                 </label>
                 <select
                   name="role"
-                  value={formData.role || "ADMIN_SISTEM"}
+                  required
+                  value={formData.role || ""}
                   onChange={handleChange}
                   className="w-full bg-slate-50 border border-slate-200 px-3.5 py-3 rounded-2xl text-xs font-semibold focus:outline-none focus:border-emerald-600 focus:bg-white transition-all"
                 >
+                  <option value="" disabled>Pilih jabatan pengurus</option>
                   {ASSIGNABLE_STAFF_ROLES.map((r) => (
                     <option key={r} value={r}>
                       {ROLE_LABELS[r] || r}
@@ -2946,7 +2972,7 @@ export default function DashboardAdmin() {
                     Jabatan / Role Pengurus
                   </label>
                   <select
-                    value={editFormData.role || "ADMIN_SISTEM"}
+                    value={editFormData.role || ""}
                     onChange={(e) =>
                       setEditFormData({ ...editFormData, role: e.target.value })
                     }
@@ -3311,13 +3337,13 @@ export default function DashboardAdmin() {
                           Cocokkan nominal <b>{formatRupiah(d.jumlah)}</b> dan waktu di struk dengan mutasi rekening.
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
-                          <button
+                          <PermissionButton role={userRole} permission="donation.proof.manage"
                             type="button"
                             onClick={handleHapusBuktiAdmin}
                             className="dashboard-text-button dashboard-text-button-danger"
                           >
                             Hapus Struk
-                          </button>
+                          </PermissionButton>
                         </div>
                       </div>
                     </div>
@@ -3361,14 +3387,14 @@ export default function DashboardAdmin() {
                           onChange={handleAdminUploadBukti}
                           className="hidden"
                         />
-                        <button
+                        <PermissionButton role={userRole} permission="donation.proof.manage"
                           type="button"
                           onClick={() => adminFileInputRef.current?.click()}
                           className="dashboard-upload-button w-full"
                         >
                           <Upload className="w-3.5 h-3.5 text-slate-400" />
                           Lampirkan Struk Manual (Jika donatur mengirim via WhatsApp)
-                        </button>
+                        </PermissionButton>
                         {adminUploadError && (
                           <p className="text-[10px] text-rose-600 font-semibold mt-1">
                             {adminUploadError}
@@ -3599,12 +3625,12 @@ export default function DashboardAdmin() {
                   ) : (
                     <>
                       {p.status === "DISETUJUI" && can(userRole, "KELOLA_PENYALURAN") && (
-                        <button
+                        <PermissionButton role={userRole} permission="assistance.distribute"
                           onClick={() => bukaPenyaluranDariPengajuan(p)}
                           className="dashboard-button dashboard-button-primary"
                         >
                           Catat penyaluran
-                        </button>
+                        </PermissionButton>
                       )}
                       <button
                         onClick={() => setDetailPengajuan(null)}
@@ -3703,7 +3729,7 @@ export default function DashboardAdmin() {
                     <p className="text-slate-400">Belum ada pengajuan bantuan.</p>
                   ) : (
                     <div className="border border-slate-100 rounded-2xl overflow-hidden">
-                      <table className="w-full text-left text-[11px]">
+                      <PaginatedTable><table className="w-full text-left text-[11px]">
                         <thead className="bg-slate-50 text-slate-600 uppercase font-black text-[9px] tracking-wider">
                           <tr>
                             <th className="p-2.5">ID</th>
@@ -3743,7 +3769,7 @@ export default function DashboardAdmin() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </table></PaginatedTable>
                     </div>
                   )}
                 </div>
@@ -3758,7 +3784,7 @@ export default function DashboardAdmin() {
                     <p className="text-slate-400">Belum ada penyaluran yang dicatat untuk penerima ini.</p>
                   ) : (
                     <div className="border border-slate-100 rounded-2xl overflow-hidden">
-                      <table className="w-full text-left text-[11px]">
+                      <PaginatedTable><table className="w-full text-left text-[11px]">
                         <thead className="bg-slate-50 text-slate-600 uppercase font-black text-[9px] tracking-wider">
                           <tr>
                             <th className="p-2.5">Tanggal</th>
@@ -3779,7 +3805,7 @@ export default function DashboardAdmin() {
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </table></PaginatedTable>
                     </div>
                   )}
                 </div>

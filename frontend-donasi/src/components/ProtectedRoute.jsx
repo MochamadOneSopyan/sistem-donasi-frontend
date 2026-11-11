@@ -1,42 +1,37 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { getStoredUser } from "../utils/format";
-import { homePathFor } from "../utils/roles";
+import API from "../services/api";
 
-// Decode payload JWT (tanpa verifikasi signature — verifikasi tetap di backend)
-const decodeToken = (token) => {
-  try {
-    const payload = token.split(".")[1];
-    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-    return JSON.parse(json);
-  } catch {
-    return null;
-  }
-};
-
-// Membatasi halaman dashboard sesuai role. Ini hanya lapisan UI;
-// otorisasi sebenarnya tetap ditegakkan oleh middleware backend.
-export default function ProtectedRoute({ roles, children }) {
+export default function ProtectedRoute({ roles, permission, children }) {
   const location = useLocation();
   const token = localStorage.getItem("token");
-  const user = getStoredUser();
-  const payload = token ? decodeToken(token) : null;
-
-  const [isExpired] = useState(() => {
-    return Boolean(payload?.exp && payload.exp * 1000 < Date.now());
-  });
-
-  if (!token || !payload || isExpired) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  const [session, setSession] = useState(null);
+  const [failure, setFailure] = useState(null);
+  useEffect(() => {
+    const expired = () => setFailure(401);
+    window.addEventListener("auth-expired", expired);
+    return () => window.removeEventListener("auth-expired", expired);
+  }, []);
+  useEffect(() => {
+    let active = true;
+    if (!token) return () => { active = false; };
+    API.get("/profil").then(({ data }) => {
+      if (!active) return;
+      if (!data.data) { setFailure(401); return; }
+      localStorage.setItem("user", JSON.stringify(data.data));
+      window.dispatchEvent(new Event("user-updated"));
+      setSession({ token, user: data.data });
+    }).catch((error) => {
+      if (active) setFailure(error.response?.status || 500);
+    });
+    return () => { active = false; };
+  }, [token, location.pathname]);
+  if (!token || failure === 401) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (failure === 403) return <Navigate to="/unauthorized" replace />;
+  if (failure) return <div className="ds-container py-12" role="alert">Gagal memverifikasi sesi. Muat ulang halaman untuk mencoba kembali.</div>;
+  if (!session || session.token !== token) return <div className="ds-container py-12" role="status">Memverifikasi sesi…</div>;
+  if ((roles && !roles.includes(session.user.role)) || (permission && !session.user.permissions?.includes(permission))) {
+    return <Navigate to="/unauthorized" replace />;
   }
-
-  // Role diambil dari token (lebih sulit dimanipulasi daripada localStorage)
-  const role = payload.role || user.role;
-  if (roles && !roles.includes(role)) {
-    return <Navigate to={homePathFor(role)} replace />;
-  }
-
   return children;
 }

@@ -10,6 +10,8 @@ import {
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import WhatsAppChat from "./components/WhatsAppChat";
+import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -42,12 +44,12 @@ function MainLayout() {
     const titles = {
       "/": "Beranda", "/login": "Masuk", "/register": "Daftar",
       "/forgot-password": "Lupa Kata Sandi", "/donatur": "Panel Donatur",
-      "/penerima": "Panel Penerima Bantuan", "/admin": "Panel Pengurus",
+      "/penerima": "Panel Penerima Bantuan", "/admin": "Panel Pengurus", "/unauthorized": "Akses ditolak",
     };
     const sections = { tentang: "Tentang Kami", program: "Fokus Kegiatan", donasi: "Program Donasi", sedekah: "Sedekah", transparansi: "Transparansi", galeri: "Galeri", bantuan: "Pengajuan Bantuan" };
     const section = location.pathname === "/" ? sections[location.hash.slice(1)] : null;
     document.title = `${section || titles[location.pathname] || "Yayasan"} | Yayasan Mulia Karya Bersama`;
-    const privatePage = ["/login", "/register", "/forgot-password", "/donatur", "/penerima", "/admin"].includes(location.pathname) || location.pathname.startsWith("/reset-password/");
+    const privatePage = ["/login", "/register", "/forgot-password", "/donatur", "/penerima", "/admin", "/unauthorized"].includes(location.pathname) || location.pathname.startsWith("/reset-password/");
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) { robots = document.createElement("meta"); robots.name = "robots"; document.head.appendChild(robots); }
     robots.content = privatePage ? "noindex, nofollow" : "index, follow";
@@ -64,12 +66,14 @@ function MainLayout() {
   return (
     // 🟢 PERBAIKAN: Ditambahkan 'w-full max-w-full overflow-x-hidden' agar melebar penuh ke seluruh layar
     <div className="w-full min-h-screen bg-slate-50 flex flex-col justify-between relative overflow-clip">
-      <div className="w-full flex-1">
+      <a className="skip-navigation" href="#main-content">Lewati navigasi</a>
+      <div id="main-content" tabIndex={-1} className="w-full flex-1">
         {/* Tampilkan Navbar publik hanya jika BUKAN halaman admin */}
         {!isAdminPage && <Navbar />}
 
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -100,6 +104,7 @@ function MainLayout() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
 

@@ -1,3 +1,4 @@
+import PaginatedTable from "../components/PaginatedTable";
 import { useEffect, useRef, useState } from "react";
 import {
   HandHeart,
@@ -421,7 +422,7 @@ export default function DashboardPenerima() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
+                <PaginatedTable><table className="w-full text-left text-xs">
                   <thead className="bg-slate-50 text-slate-600 uppercase font-black text-[10px] tracking-wider">
                     <tr>
                       <th className="p-4">Tanggal Salur</th>
@@ -461,7 +462,7 @@ export default function DashboardPenerima() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></PaginatedTable>
               </div>
             )}
           </div>
@@ -534,7 +535,7 @@ export default function DashboardPenerima() {
             </div>
           ) : (
             <div className="recipient-history-scroll" role="region" aria-label="Daftar riwayat pengajuan" tabIndex={0}>
-              <table className="w-full text-left text-xs text-slate-600">
+              <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50 text-slate-700 uppercase font-black text-[10px] tracking-wider sticky top-0 z-10">
                   <tr>
                     <th className="p-4">Tanggal</th>
@@ -578,7 +579,7 @@ export default function DashboardPenerima() {
                     );
                   })}
                 </tbody>
-              </table>
+              </table></PaginatedTable>
             </div>
           )}
         </div>
