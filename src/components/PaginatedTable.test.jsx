@@ -15,3 +15,12 @@ it('shows ten rows, navigates, clamps page and resets when filtered records chan
 it('keeps small and empty tables without unnecessary pagination',()=>{
  render(<PaginatedTable>{table([1])}</PaginatedTable>);expect(screen.queryByRole('navigation')).toBeNull();expect(screen.getByText('Record 1')).toBeTruthy();
 });
+
+it('keeps pagination outside the horizontally scrolling table region',()=>{
+ render(<PaginatedTable>{table(Array.from({length:11},(_,i)=>i+1))}</PaginatedTable>);
+ const region=screen.getByRole('region');
+ expect(region.querySelector('table')).toBeTruthy();
+ expect(region.contains(screen.getByRole('navigation'))).toBe(false);
+ expect(region.contains(screen.getByText('Berikutnya'))).toBe(false);
+ expect(region.tabIndex).toBe(0);
+});

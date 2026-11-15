@@ -22,4 +22,11 @@ Tiga belas role akun dipertahankan, dengan permission sama untuk setiap anggota 
 
 Frontend dapat diuji/build sendiri tanpa checkout repository backend. Pengujian memakai mock API, bukan pembayaran atau database produksi. Laporan audit, screenshot dan fixture browser dari workspace tidak disertakan dalam rilis inti ini.
 
-Sebelum go-live, backend harus lulus konfigurasi SMTP/HTTPS/volume, rekonsiliasi schema dan acceptance staging. Jangan mengarahkan transaksi nyata hanya berdasarkan build frontend yang berhasil.
+Sebelum go-live, backend harus lulus konfigurasi Resend atau SMTP/HTTPS/volume, rekonsiliasi schema dan acceptance staging. Jangan mengarahkan transaksi nyata hanya berdasarkan build frontend yang berhasil.
+
+## Pemeriksaan rilis
+
+Isi konfigurasi produksi sebelum build: lihat [deployment/production.env.example](deployment/production.env.example).
+Jalankan `npm run check:production` untuk menolak URL localhost/non-HTTPS, mode demo dan nama variabel rahasia VITE_. Pemeriksaan tidak menghubungi backend dan tidak menggantikan uji login, reset password, donasi serta upload pada produksi.
+
+Urutan rilis: `npm run check:production`, `npm test`, `npm run lint`, `npm run build`. Build tidak otomatis dijadikan produksi hanya karena perintah build lulus. VITE_API_URL harus URL backend berakhiran /api; VITE_SITE_URL adalah origin frontend HTTPS.

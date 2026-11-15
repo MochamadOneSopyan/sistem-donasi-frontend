@@ -10,11 +10,12 @@ export default function PaginatedTable({ children: table, pageSize = 10, label =
   const signature = rows.map(row => row.key).join('|');
   const pages = Math.max(1, Math.ceil(rows.length / pageSize));
   const page = selection.signature === signature ? Math.min(selection.page, pages) : 1;
-  if (pages === 1) return table;
+  const scrollTable = content => <div className="paginated-table-scroll" role="region" aria-label={`${label}, geser ke samping untuk melihat semua kolom`} tabIndex={0}>{content}</div>;
+  if (pages === 1) return scrollTable(table);
   const offset = (page - 1) * pageSize;
   const change = next => setSelection({ signature, page: next });
   const content = cloneElement(table, { id }, parts.map(part => part === body ? cloneElement(body, {}, rows.slice(offset, offset + pageSize)) : part));
-  return <>{content}<nav className="table-pagination" aria-label={`Navigasi halaman ${label}`}>
+  return <>{scrollTable(content)}<nav className="table-pagination" aria-label={`Navigasi halaman ${label}`}>
     <span role="status">{offset + 1}–{Math.min(offset + pageSize, rows.length)} dari {rows.length} data · Halaman {page}/{pages}</span>
     <div><button type="button" aria-controls={id} disabled={page === 1} onClick={() => change(page - 1)}>Sebelumnya</button>
     <button type="button" aria-controls={id} disabled={page === pages} onClick={() => change(page + 1)}>Berikutnya</button></div>

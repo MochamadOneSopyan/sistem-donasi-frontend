@@ -1,6 +1,7 @@
 // Existing published contact details; telephone and WhatsApp are separate channels.
 export const foundation = {
   name: "Yayasan Mulia Karya Bersama",
+  address: "Jl. Tenggiri IV No.9, RT.004/RW.008, Karawaci Baru, Kec. Karawaci, Kota Tangerang, Banten 15116",
   region: "Kota Tangerang, Banten, Indonesia",
   phone: "+62 859-2291-4919",
   phoneHref: "tel:+6285922914919",

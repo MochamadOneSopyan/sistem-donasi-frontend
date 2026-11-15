@@ -33,6 +33,10 @@ export default function Footer() {
         <div className="footer-about"><Link to="/" className="footer-brand"><img src={logoYayasan} alt="Logo yayasan" width="48" height="48" /><h2>Yayasan Mulia<br />Karya Bersama</h2></Link>
           <p>Lembaga sosial dan pendidikan keagamaan untuk kepedulian sosial, pendidikan Al-Qur'an, serta pemberdayaan yatim dan dhuafa.</p>
           <div className="footer-socials"><a href={foundation.facebook} target="_blank" rel="noreferrer" aria-label="Facebook yayasan"><FacebookIcon /></a><a href={foundation.instagram} target="_blank" rel="noreferrer" aria-label="Instagram yayasan"><InstagramIcon /></a></div>
+          <div className="footer-address">
+            <h3>Alamat</h3>
+            <address><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(foundation.address)}`} target="_blank" rel="noopener noreferrer">{foundation.address}<ArrowUpRight size={15} aria-hidden="true" /></a></address>
+          </div>
         </div>
         <nav className="footer-nav" aria-label="Tautan footer"><h3>Jelajahi yayasan</h3><div className="footer-links">{publicNavigationItems.map(({ id, label }) => <Link key={id} to={id === "beranda" ? "/" : `/#${id}`} onClick={(event) => handleSectionClick(event, id)}>{label}</Link>)}</div></nav>
         <div className="footer-contact"><h3>Tetap terhubung</h3><div className="footer-links"><span>{foundation.region}</span><a href={foundation.phoneHref}>{foundation.phone}</a><a href={`mailto:${foundation.email}`}>{foundation.email}</a><a href={`https://wa.me/${foundation.whatsapp}`} target="_blank" rel="noreferrer">Layanan WhatsApp <ArrowUpRight size={15} /></a></div>

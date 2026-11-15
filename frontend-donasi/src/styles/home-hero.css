@@ -41,37 +41,11 @@
   flex-direction: column;
   align-items: flex-start;
   width: min(100%, clamp(360px, 41vw, 586px));
-  gap: 2px;
-  margin-bottom: 16px;
+  position: relative;
+  container-type: inline-size;
+  gap: 12px;
+  margin-bottom: 24px;
   animation: bismillah-enter 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-.hero-arabic {
-  display: block;
-  width: 100%;
-  padding: 12px 0 2px;
-  margin-bottom: -4px;
-  font-family: Amiri, "Traditional Arabic", serif;
-  font-size: clamp(38px, 4.75vw, 68px);
-  font-weight: 400;
-  line-height: 1.22;
-  word-spacing: 0.04em;
-  text-align: left;
-  white-space: nowrap;
-  color: #f4ba42;
-  background: linear-gradient(
-    110deg,
-    #f4ba42 0%,
-    #f4ba42 38%,
-    #fde68a 50%,
-    #f4ba42 62%,
-    #f4ba42 100%
-  );
-  background-size: 240% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: bismillah-sheen 6s ease-in-out infinite;
 }
 
 .hero-bismillah-caption {
@@ -79,7 +53,8 @@
   align-items: center;
   gap: 14px;
   width: 100%;
-  font-size: 12px;
+  animation: bismillah-enter 800ms 180ms both;
+  font-size: clamp(9px, 2.35cqi, 12px);
   font-weight: 700;
   line-height: 1.4;
   text-transform: uppercase;
@@ -90,7 +65,10 @@
 .hero-bismillah-caption::after {
   content: "";
   flex: 1;
+  min-width: 16px;
   height: 1px;
+  transform-origin: left;
+  animation: bismillah-line 1000ms 400ms both;
   background: linear-gradient(90deg, rgba(244, 186, 66, 0.55), rgba(169, 205, 185, 0.12));
 }
 
@@ -102,17 +80,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes bismillah-sheen {
-  0%,
-  20% {
-    background-position: 100% 50%;
-  }
-  80%,
-  100% {
-    background-position: 0% 50%;
   }
 }
 
@@ -259,9 +226,8 @@
 }
 @media (max-width: 639px) {
   .hero-layout { padding: 0 20px; }
-  .hero-bismillah { margin-bottom: 14px; gap: 2px; }
-  .hero-arabic { font-size: clamp(28px, 8.2vw, 36px); }
-  .hero-bismillah-caption { font-size: 11px; }
+  .hero-bismillah { margin-bottom: 20px; gap: 10px; }
+  .hero-bismillah-caption { letter-spacing: .1em; gap: 10px; }
   .home-hero .hero-title { font-size: clamp(27px, 7.6vw, 42px); line-height: 1.15; }
   .hero-description { font-size: 14px; margin-top: 24px; }
   .hero-actions { flex-direction: column; margin-top: 28px; }
@@ -275,3 +241,51 @@
 @media (prefers-reduced-motion: reduce) {
   .home-hero *, .public-navbar--forest * { animation: none !important; transition: none !important; }
 }
+
+.hero-bismillah::before { content: ""; position: absolute; inset: 12% 8% 22%; z-index: -1; pointer-events: none; border-radius: 50%; background: radial-gradient(ellipse, #f4ba4214, transparent 70%); animation: bismillah-aura 6s ease-in-out infinite; }
+@keyframes bismillah-aura { 0%, 100% { opacity: .35; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.04); } }
+@keyframes bismillah-line { from { opacity: 0; transform: scaleX(0); } to { opacity: 1; transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-bismillah::before, .hero-bismillah-caption::after { animation: none !important; }
+}
+
+.hero-bismillah-replay { display: block; width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+
+
+/* Calligraphic ink: trace each connected word, then settle into gold. */
+.bismillah-writing { display: block; width: 100%; height: auto; overflow: visible; }
+.bismillah-writing text { font-family: Amiri, "Traditional Arabic", serif; font-size: 125px; font-weight: 400; }
+.bismillah-word-outline { fill: none; stroke: #ffe7a0; stroke-width: .65; stroke-dasharray: 900; stroke-dashoffset: 900; opacity: 0; animation: bismillah-outline .3s var(--word-delay) ease-out both; }
+.bismillah-word-ink { stroke: #f4ba42; stroke-width: .2; }
+.bismillah-ink-mask { stroke-dasharray: 1; stroke-dashoffset: 1; animation: bismillah-ink-flow .233s var(--word-delay) cubic-bezier(.35, .05, .35, 1) both; }
+.bismillah-pen { offset-path: path("M 1040 110 Q 990 80 940 120 T 860 110 M 820 110 Q 770 80 730 120 T 670 110 M 630 110 Q 550 80 480 120 T 360 110 M 320 110 Q 240 80 160 120 T 40 110"); offset-rotate: -25deg; animation: bismillah-pen-travel .933s .05s linear both; pointer-events: none; }
+.hero-bismillah-replay:hover .bismillah-writing { filter: drop-shadow(0 0 6px #f4ba4228); }
+@keyframes bismillah-outline { 0% { stroke-dashoffset: 900; opacity: 0; } 20% { opacity: .6; } 75% { stroke-dashoffset: 0; opacity: .4; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes bismillah-ink-flow { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes bismillah-pen-travel { 0% { offset-distance: 0%; opacity: 0; } 3% { opacity: .9; } 94% { opacity: .9; } 100% { offset-distance: 100%; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .bismillah-ink-mask { stroke-dashoffset: 0; }
+  .bismillah-word-outline, .bismillah-pen { display: none; }
+}
+
+/* Animate words in place; hover never changes the heading's measured size. */
+.hero-title-replay { display: block; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; letter-spacing: inherit; line-height: inherit; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hero-title-line { display: block; }
+.hero-title-word { display: inline-block; animation: hero-word-enter 750ms cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(180ms + var(--word-index) * 100ms); }
+.hero-title-word > span { display: inline-block; transition: color 220ms ease, transform 220ms ease, text-shadow 220ms ease; }
+@media (hover: hover) and (pointer: fine) {
+  .hero-title-word:hover > span { color: #ffe7a0; transform: translateY(-3px); text-shadow: 0 5px 24px #f4ba4235; }
+}
+.hero-title-replay:active .hero-title-word > span { transform: translateY(1px); }
+.hero-title-accent .hero-title-word > span { background: linear-gradient(105deg, #f4ba42 15%, #ffe7a0 45%, #f4ba42 65%); background-size: 240% 100%; background-clip: text; -webkit-background-clip: text; color: transparent; animation: hero-title-gold 7s 1.4s ease-in-out infinite; }
+@keyframes hero-word-enter { from { opacity: 0; transform: translateY(10px); filter: blur(3px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes hero-title-gold { 0%, 25% { background-position: 100% 50%; } 75%, 100% { background-position: 0% 50%; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-title-word { opacity: 1; transform: none; filter: none; }
+  .hero-title-word > span { transform: none !important; }
+}
+
+/* Start the headline only after the last calligraphy stroke has finished. */
+.home-hero .hero-title[data-ready="false"] .hero-title-word { animation: none; opacity: 0; }
+.home-hero .hero-title[data-ready="false"] .hero-title-word > span { animation: none; }
+.hero-title-replay:disabled { cursor: default; }

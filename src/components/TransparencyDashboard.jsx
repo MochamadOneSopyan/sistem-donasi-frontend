@@ -4,16 +4,11 @@ import { Dialog, EmptyState, LoadingCards, SectionHeading } from "./PublicUI";
 import Notice from "./Notice";
 import { formatRupiah, formatTanggal } from "../utils/format";
 import "../styles/transparency-dashboard.css";
+import { completedMonthChange } from "../utils/transparency";
 
 const monthFormatter = new Intl.DateTimeFormat("id-ID", { month: "short", year: "numeric", timeZone: "Asia/Jakarta" });
 const DonationTrendChart = lazy(() => import("./DonationTrendChart"));
 
-function completedMonthChange(trends, key) {
-  if (!Array.isArray(trends) || trends.length < 3) return null;
-  const before = Number(trends.at(-3)?.[key] || 0);
-  const last = Number(trends.at(-2)?.[key] || 0);
-  return before > 0 ? (last - before) / before * 100 : null;
-}
 
 function useCountUp(value, active, duration = 1300) {
   const target = Number.isFinite(Number(value)) ? Number(value) : 0;

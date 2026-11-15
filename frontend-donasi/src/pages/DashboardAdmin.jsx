@@ -98,6 +98,7 @@ export default function DashboardAdmin() {
   const [donaturList, setDonaturList] = useState([]);
   const [penerimaList, setPenerimaList] = useState([]);
   const [penerimaPending, setPenerimaPending] = useState([]);
+  const [pendingError, setPendingError] = useState("");
   const [programList, setProgramList] = useState([]);
   const [programLoading, setProgramLoading] = useState(true);
   const [programError, setProgramError] = useState("");
@@ -105,6 +106,7 @@ export default function DashboardAdmin() {
   const [loadingPending, setLoadingPending] = useState(() => can(getStoredUser()?.role || "", "LIHAT_PENERIMA"));
   const [loadingDonasi, setLoadingDonasi] = useState(() => can(getStoredUser()?.role || "", "LIHAT_DONASI"));
   const [loading, setLoading] = useState(false);
+  const [searchProgram, setSearchProgram] = useState("");
   const [searchDonasi, setSearchDonasi] = useState("");
   const [filterDonasiType, setFilterDonasiType] = useState("all"); // "all" | "terdaftar" | "anonim"
   const [filterDonasiStatus, setFilterDonasiStatus] = useState("all"); // "all" | "PENDING" | "BERHASIL" | "GAGAL"
@@ -204,7 +206,7 @@ export default function DashboardAdmin() {
     if (can(userRole, "KELOLA_PENGGUNA")) load("/admin/pengurus", (data) => setPengurusList(data || []));
     if (can(userRole, "LIHAT_PENERIMA")) {
       load("/admin/penerima", (data) => setPenerimaList(data || []));
-      load("/admin/penerima-pending", (data) => setPenerimaPending(data || []), null, () => setLoadingPending(false));
+      load("/admin/penerima-pending", (data) => { setPenerimaPending(data || []); setPendingError(""); }, (err) => setPendingError(getErrorMessage(err, "Gagal memuat antrean penerima bantuan.")), () => setLoadingPending(false));
     }
     if (can(userRole, "LIHAT_DONATUR")) load("/admin/donatur", (data) => setDonaturList(data || []));
     if (can(userRole, "LIHAT_PENGAJUAN")) {
@@ -219,6 +221,22 @@ export default function DashboardAdmin() {
     });
     return () => { active = false; };
   }, [userRole]);
+
+  useEffect(() => {
+    if (activeMenu !== "verifikasi" || !can(userRole, "recipient.view")) return;
+    let active = true;
+    const refresh = () => {
+      setLoadingPending(true);
+      setPendingError("");
+      API.get("/admin/penerima-pending")
+        .then(({ data }) => { if (active) setPenerimaPending(data.data || []); })
+        .catch((err) => { if (active) setPendingError(getErrorMessage(err, "Gagal memuat antrean penerima bantuan.")); })
+        .finally(() => { if (active) setLoadingPending(false); });
+    };
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => { active = false; window.removeEventListener("focus", refresh); };
+  }, [activeMenu, userRole]);
 
   const fetchAllData = () => {
     fetchDaftarPengurus();
@@ -334,11 +352,10 @@ export default function DashboardAdmin() {
   const fetchPenerimaPending = () => {
     if (!can(userRole, "recipient.view")) return;
     setLoadingPending(true);
+    setPendingError("");
     API.get("/admin/penerima-pending")
       .then((res) => setPenerimaPending(res.data.data || []))
-      .catch((err) =>
-        console.error("Gagal mengambil pendaftar penerima bantuan:", err),
-      )
+      .catch((err) => setPendingError(getErrorMessage(err, "Gagal memuat antrean penerima bantuan.")))
       .finally(() => setLoadingPending(false));
   };
 
@@ -1197,11 +1214,16 @@ export default function DashboardAdmin() {
               </div>
               <span className="bg-amber-50 text-amber-800 border border-amber-200/70 font-semibold text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                <span>{penerimaPending.length} Menunggu</span>
+                <span>{pendingError ? "Gagal dimuat" : `${penerimaPending.length} Menunggu`}</span>
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="px-5 py-3 flex items-center justify-end">
+              <button type="button" onClick={fetchPenerimaPending} disabled={loadingPending} className="dashboard-button dashboard-button-secondary dashboard-button-compact">
+                <RefreshCw className={`w-4 h-4 ${loadingPending ? "animate-spin" : ""}`} /> Muat ulang antrean
+              </button>
+            </div>
+            <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
               <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
@@ -1222,6 +1244,8 @@ export default function DashboardAdmin() {
                         Memuat antrean verifikasi...
                       </td>
                     </tr>
+                  ) : pendingError ? (
+                    <tr><td colSpan="5" className="p-6"><Notice type="error" message={pendingError} /></td></tr>
                   ) : penerimaPending.length === 0 ? (
                     <tr>
                       <td
@@ -1287,22 +1311,20 @@ export default function DashboardAdmin() {
 
         {/* TAB PROGRAM: DAFTAR PROGRAM DONASI */}
         {activeMenu === "program" && (
-          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden text-left">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <Heart className="w-4 h-4 text-emerald-700" />
-                  <span>Semua Program Donasi</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Kelola program penggalangan dana dan target bantuan yayasan
-                </p>
+          <div className="space-y-4 text-left">
+            <div className="admin-filter-toolbar flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+              <div className="dashboard-segmented flex items-center gap-1">
+                <span className="admin-filter-summary">Semua program <span>{programList.length}</span></span>
               </div>
-              <span className="bg-slate-100 text-slate-600 text-xs font-semibold px-2.5 py-1 rounded-full">
-                {programList.length} Program
-              </span>
+              <div className="admin-filter-controls flex items-center gap-2">
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input type="search" aria-label="Cari program donasi" placeholder="Cari judul / deskripsi program..." value={searchProgram} onChange={(event) => setSearchProgram(event.target.value)} className="bg-slate-50 border border-slate-200 pl-8 pr-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-emerald-600 transition" />
+                </div>
+                <button type="button" onClick={fetchProgram} disabled={programLoading} className="dashboard-icon-button" title="Muat ulang program" aria-label="Muat ulang program"><RefreshCw className={`w-4 h-4 ${programLoading ? "animate-spin" : ""}`} /></button>
+              </div>
             </div>
-
+            <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden text-left">
             {programLoading ? (
               <div className="p-6 space-y-3" role="status" aria-label="Memuat program donasi"><div className="h-12 rounded-xl bg-slate-100 animate-pulse" /><div className="h-12 rounded-xl bg-slate-100 animate-pulse" /><div className="h-12 rounded-xl bg-slate-100 animate-pulse" /></div>
             ) : programError ? (
@@ -1320,19 +1342,20 @@ export default function DashboardAdmin() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <PaginatedTable><table className="w-full text-left border-collapse">
+              <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
+                <PaginatedTable label="Program donasi"><table className="admin-programs-table w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                       <th className="py-3 px-4">Judul Program</th>
                       <th className="py-3 px-4">Target Dana</th>
                       <th className="py-3 px-4">Terkumpul</th>
-                      <th className="py-3 px-4">Progress</th>
+                      <th className="py-3 px-4">Progres</th>
                       <th className="py-3 px-4 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                    {programList.map((prog) => {
+                    {!programList.some((prog) => `${prog.judul || ""} ${prog.deskripsi || ""}`.toLowerCase().includes(searchProgram.trim().toLowerCase())) && <tr><td colSpan={5} className="p-8 text-center text-slate-500">Tidak ada program yang sesuai dengan pencarian.</td></tr>}
+                    {programList.filter((prog) => `${prog.judul || ""} ${prog.deskripsi || ""}`.toLowerCase().includes(searchProgram.trim().toLowerCase())).map((prog) => {
                       const terkumpul = hitungTerkumpul(prog);
                       const tidakSinkron = isTerkumpulTidakSinkron(prog);
                       const jumlahPending = (prog.donasi || []).filter(
@@ -1348,7 +1371,7 @@ export default function DashboardAdmin() {
                           className="hover:bg-slate-50/60 transition-colors"
                         >
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-3 min-w-[220px]">
+                            <div className="admin-program-identity flex items-center gap-3">
                               <ProgramImage imageUrl={prog.imageUrl} title={prog.judul} className="dashboard-program-thumb w-12 h-12 rounded-lg shrink-0" />
                               <div><span className="font-semibold text-slate-900 block text-xs">{prog.judul}</span><span className="text-[11px] text-slate-400 line-clamp-1 mt-0.5 max-w-md">{prog.deskripsi}</span></div>
                             </div>
@@ -1383,24 +1406,24 @@ export default function DashboardAdmin() {
                               {persen}% tercapai
                             </span>
                           </td>
-                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap"><div className="admin-row-actions">
                             <PermissionButton role={userRole} permission="program.update"
                               onClick={() => { setError(""); setSuccess(""); setEditingProgram(prog); setModalProgramOpen(true); }}
-                              className="dashboard-icon-button"
+                              className="dashboard-button dashboard-button-secondary dashboard-button-compact"
                               title={`Edit ${prog.judul}`}
                               aria-label={`Edit ${prog.judul}`}
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-4 h-4" /><span>Edit</span>
                             </PermissionButton>
                             <PermissionButton role={userRole} permission="program.delete"
                               onClick={() => handleHapusProgram(prog.id, prog.judul)}
                               disabled={(prog.donasi?.length || 0) > 0 || (prog.penyaluranBantuan?.length || 0) > 0}
-                              className="dashboard-icon-button dashboard-icon-button-danger"
+                              className="dashboard-button dashboard-button-danger-outline dashboard-button-compact"
                               title={(prog.donasi?.length || 0) > 0 || (prog.penyaluranBantuan?.length || 0) > 0 ? "Tidak dapat dihapus karena memiliki riwayat donasi atau penyaluran" : "Hapus Program"}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" /><span>Hapus</span>
                             </PermissionButton>
-                          </td>
+                          </div></td>
                         </tr>
                       );
                     })}
@@ -1408,6 +1431,7 @@ export default function DashboardAdmin() {
                 </table></PaginatedTable>
               </div>
             )}
+            </div>
           </div>
         )}
 
@@ -1415,7 +1439,7 @@ export default function DashboardAdmin() {
         {activeMenu === "donasi" && (
           <div className="space-y-4 text-left">
             {/* TOOLBAR FILTER & SEARCH */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
+            <div className="admin-filter-toolbar flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
               {/* Segmented Status Filter */}
               <div className="dashboard-segmented flex items-center gap-1 overflow-x-auto">
                 {[
@@ -1449,11 +1473,12 @@ export default function DashboardAdmin() {
               </div>
 
               {/* Search & Tipe Filter */}
-              <div className="flex items-center gap-2">
+              <div className="admin-filter-controls flex items-center gap-2">
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
+                    aria-label="Cari donatur atau program"
                     placeholder="Cari donatur / program..."
                     value={searchDonasi}
                     onChange={(e) => setSearchDonasi(e.target.value)}
@@ -1462,6 +1487,7 @@ export default function DashboardAdmin() {
                 </div>
 
                 <select
+                  aria-label="Tipe donatur"
                   value={filterDonasiType}
                   onChange={(e) => setFilterDonasiType(e.target.value)}
                   className="bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg text-xs font-medium focus:outline-none focus:border-emerald-600 transition cursor-pointer"
@@ -1486,8 +1512,8 @@ export default function DashboardAdmin() {
 
             {/* TABEL DATA TRANSAKSI */}
             <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden text-left">
-              <div className="overflow-x-auto">
-                <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
+              <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
+                <PaginatedTable label="Transaksi donasi"><table className="admin-transactions-table w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                     <tr>
                       <th className="py-3 px-4">ID Transaksi</th>
@@ -1732,7 +1758,7 @@ export default function DashboardAdmin() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
               <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
@@ -1875,7 +1901,7 @@ export default function DashboardAdmin() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
               <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
@@ -2022,7 +2048,7 @@ export default function DashboardAdmin() {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
               <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>
@@ -2125,7 +2151,7 @@ export default function DashboardAdmin() {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="admin-table-scroll overflow-x-auto" role="region" aria-label="Tabel data, geser ke samping untuk melihat semua kolom" tabIndex={0}>
               <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                 <thead className="bg-slate-50/75 border-b border-slate-200/80 text-slate-500 uppercase font-semibold text-[11px] tracking-wider">
                   <tr>

@@ -1014,3 +1014,60 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Keep wide admin data inside its own keyboard-accessible scroll region. */
+.admin-main { flex-basis: 0; }
+.admin-main > *, .admin-page-header > div { min-width: 0; }
+.admin-page-header { flex-wrap: wrap; gap: 16px; }
+.admin-table-scroll { width: 100%; max-width: 100%; overscroll-behavior-inline: contain; scrollbar-width: thin; scrollbar-color: #8db9a5 #f2f7f4; }
+.admin-table-scroll:focus-visible { outline: 2px solid var(--dashboard-green); outline-offset: -2px; }
+.admin-table-scroll .paginated-table-scroll > table { min-width: 960px; }
+.admin-main table :is(th, td) { padding: 14px 16px; line-height: 1.5; }
+.admin-main table th { font-size: 11px; font-weight: 700; }
+.admin-main table td { font-size: 12px; }
+.admin-main table td:last-child .dashboard-button { white-space: nowrap; }
+.admin-main table .dashboard-button svg { flex-shrink: 0; }
+.admin-table-scroll .paginated-table-scroll > .admin-transactions-table { min-width: 1280px; table-layout: fixed; }
+.admin-transactions-table :is(th, td):nth-child(1) { width: 110px; }
+.admin-transactions-table :is(th, td):nth-child(2) { width: 250px; overflow-wrap: anywhere; }
+.admin-transactions-table :is(th, td):nth-child(3) { width: 250px; overflow-wrap: anywhere; }
+.admin-transactions-table :is(th, td):nth-child(4) { width: 130px; }
+.admin-transactions-table :is(th, td):nth-child(5) { width: 90px; }
+.admin-transactions-table :is(th, td):nth-child(6) { width: 110px; }
+.admin-transactions-table :is(th, td):nth-child(7) { width: 130px; }
+.admin-transactions-table :is(th, td):nth-child(8) { width: 210px; }
+.admin-transactions-table td:nth-child(2) .flex > div:last-child { min-width: 0; }
+.admin-filter-toolbar { flex-wrap: wrap; align-items: center; }
+.admin-filter-toolbar .dashboard-segmented { flex-shrink: 0; }
+.admin-filter-controls { flex: 1 1 440px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+.admin-filter-controls > .relative { flex: 1 1 200px; min-width: 0; }
+.admin-filter-controls input { width: 100%; }
+.admin-filter-controls select { max-width: 100%; flex: 0 1 170px; }
+@media (max-width: 767px) {
+  .admin-filter-controls { width: 100%; flex-basis: auto; }
+  .admin-filter-toolbar .dashboard-segmented { width: 100%; flex-shrink: 1; }
+  .admin-filter-controls > .relative { flex-basis: 100%; }
+  .admin-filter-controls select { flex-grow: 1; }
+  .admin-table-scroll .paginated-table-scroll > table { min-width: 800px; }
+  .admin-table-scroll .paginated-table-scroll > .admin-transactions-table { min-width: 1280px; }
+}
+
+/* Keep transaction actions reachable while reading wide rows. */
+:is(.admin-transactions-table, .admin-programs-table) :is(th, td):last-child { position: sticky; right: 0; z-index: 1; background: #fff; box-shadow: -8px 0 12px -12px rgba(7, 63, 51, .45); }
+:is(.admin-transactions-table, .admin-programs-table) th:last-child { background: #f2f7f4; }
+:is(.admin-transactions-table, .admin-programs-table) tbody tr:hover td:last-child { background: #f7faf8; }
+@media (max-width: 767px) {
+  :is(.admin-transactions-table, .admin-programs-table) :is(th, td):last-child { position: static; box-shadow: none; }
+}
+
+.admin-filter-summary { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 7px 13px; border-radius: 999px; background: #fff; color: var(--dashboard-forest); font-size: 12px; font-weight: 600; }
+.admin-filter-summary > span { padding: 1px 7px; border-radius: 999px; background: #e7f2eb; font-size: 10px; }
+.admin-table-scroll .paginated-table-scroll > .admin-programs-table { min-width: 1050px; table-layout: fixed; }
+.admin-programs-table :is(th, td):nth-child(1) { width: 360px; }
+.admin-programs-table :is(th, td):nth-child(2), .admin-programs-table :is(th, td):nth-child(3) { width: 160px; }
+.admin-programs-table :is(th, td):nth-child(4) { width: 150px; }
+.admin-programs-table :is(th, td):nth-child(5) { width: 220px; }
+.admin-program-identity > div { min-width: 0; overflow-wrap: anywhere; }
+.admin-row-actions { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.admin-programs-table td:nth-child(3) { color: #047857; font-weight: 800; }
+.admin-programs-table td:nth-child(3), .admin-transactions-table td:nth-child(4) > span { font-size: 14px; }
