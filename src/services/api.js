@@ -13,4 +13,14 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+API.interceptors.response.use((response) => response, (error) => {
+  if (error.response?.status === 401 && error.config?.headers?.Authorization) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.dispatchEvent(new Event("user-updated"));
+    window.dispatchEvent(new Event("auth-expired"));
+  }
+  return Promise.reject(error);
+});
+
 export default API;

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import InteractiveHeroTitle from "../components/InteractiveHeroTitle";
+import BismillahWriting from "../components/BismillahWriting";
 import ModalDonasi from "../components/ModalDonasi";
 import PublicSections from "../components/PublicSections";
 import useApiResource from "../hooks/useApiResource";
@@ -12,6 +14,8 @@ export default function Home() {
   const loading = programResource.loading;
   const transparansi = transparencyResource.data;
   const [selectedProgram, setSelectedProgram] = useState(null);
+  const [bismillahReplay, setBismillahReplay] = useState(0);
+  const [bismillahComplete, setBismillahComplete] = useState(() => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || false);
 
   // State untuk Card Donasi Cepat di Hero Section
   const [quickNominal, setQuickNominal] = useState(null);
@@ -95,23 +99,24 @@ export default function Home() {
         <div className="hero-layout">
           <div className="hero-intro">
             <div className="hero-bismillah">
-              <span
-                className="hero-arabic"
-                dir="rtl"
-                lang="ar"
+              <button
+                type="button"
+                className="hero-bismillah-replay"
+                onClick={() => {
+                  setBismillahComplete(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || false);
+                  setBismillahReplay((value) => value + 1);
+                }}
+                aria-label="Bismillahirrahmanirrahim. Putar ulang animasi penulisan"
+                title="Klik untuk menulis ulang Bismillah"
               >
-                بِسْــمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيــمِ
-              </span>
+                <BismillahWriting key={bismillahReplay} onComplete={() => setBismillahComplete(true)} />
+              </button>
               <span className="hero-bismillah-caption">
                 Mengawali niat tulus berbagi
               </span>
             </div>
 
-            <h1 className="hero-title">
-              Mengalirkan Berkah,
-              <span className="hero-title-accent">Merawat Martabat &amp;</span>
-              Kemandirian Umat
-            </h1>
+            <InteractiveHeroTitle key={bismillahReplay} ready={bismillahComplete} />
             <p className="hero-description">
               Bersama, hadirkan harapan bagi santri yatim, dhuafa, dan keluarga
               prasejahtera melalui sedekah dan zakat yang memberdayakan.

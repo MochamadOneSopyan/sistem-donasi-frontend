@@ -1,4 +1,4 @@
-// Salinan matriks 13 role RBAC backend (backend-donasi/src/roles.js) untuk mengatur tampilan.
+// Satu himpunan permission untuk setiap kelompok; 13 role akun tetap dipertahankan.
 // Ini hanya lapisan UI; otorisasi sebenarnya tetap dicek oleh backend.
 
 export const ROLE_LABELS = {
@@ -17,49 +17,146 @@ export const ROLE_LABELS = {
   PENERIMA_BANTUAN: "Penerima Bantuan",
 };
 
-const FULL_ACCESS_ROLES = ["ADMIN_SISTEM", "BIDANG_INFORMATIKA"];
-
-export const STAFF_ROLES = Object.keys(ROLE_LABELS).filter(
-  (role) => role !== "DONATUR" && role !== "PENERIMA_BANTUAN",
-);
-
-export const ASSIGNABLE_STAFF_ROLES = STAFF_ROLES;
-
-const BIDANG = ["BIDANG_SOSIAL", "BIDANG_PENDIDIKAN", "BIDANG_KESEHATAN"];
-const PEMANTAU_LAPORAN = [
+export const STAFF_ROLES = [
+  "ADMIN_SISTEM",
+  "BIDANG_INFORMATIKA",
   "KETUA",
   "BENDAHARA",
   "SEKRETARIS",
-  "PENGAWAS",
-  "PEMBINA",
+  "BIDANG_SOSIAL",
+  "BIDANG_PENDIDIKAN",
+  "BIDANG_KESEHATAN",
   "HUMAS",
-  ...BIDANG,
+  "PENGAWAS",
+  "PEMBINA"
 ];
-
-const PERMISSIONS = {
-  LIHAT_RINGKASAN: STAFF_ROLES,
-  KELOLA_PROGRAM: ["KETUA", "HUMAS"],
-  VERIFIKASI_DONASI: ["BENDAHARA"],
-  LIHAT_DONASI: ["BENDAHARA", "KETUA", "SEKRETARIS", "PENGAWAS", "PEMBINA"],
-  LIHAT_DONATUR: ["BENDAHARA"],
-  LIHAT_PENERIMA: ["KETUA", "SEKRETARIS", ...BIDANG],
-  KELOLA_PENERIMA: ["KETUA", ...BIDANG],
-  LIHAT_PENGAJUAN: ["KETUA", "SEKRETARIS", ...BIDANG],
-  VERIFIKASI_PENGAJUAN: ["KETUA", ...BIDANG],
-  KELOLA_PENYALURAN: BIDANG,
-  LIHAT_LAPORAN: PEMANTAU_LAPORAN,
-  KELOLA_PENGGUNA: [],
-};
-
-export function isStaffRole(role) {
-  return STAFF_ROLES.includes(role);
-}
-
+export const ASSIGNABLE_STAFF_ROLES = STAFF_ROLES;
+export const ROLE_GROUPS = Object.freeze({
+  "PIMPINAN": [
+    "KETUA",
+    "PENGAWAS",
+    "PEMBINA"
+  ],
+  "ADMINISTRASI_KEUANGAN": [
+    "SEKRETARIS",
+    "BENDAHARA"
+  ],
+  "PENGURUS_OPERASIONAL": [
+    "BIDANG_SOSIAL",
+    "BIDANG_PENDIDIKAN",
+    "BIDANG_KESEHATAN",
+    "BIDANG_INFORMATIKA",
+    "HUMAS"
+  ],
+  "ADMIN_SISTEM": [
+    "ADMIN_SISTEM"
+  ],
+  "DONATUR": [
+    "DONATUR"
+  ],
+  "PEMOHON_BANTUAN": [
+    "PENERIMA_BANTUAN"
+  ]
+});
+export const GROUP_PERMISSIONS = Object.freeze(Object.fromEntries(Object.entries({
+  "ADMIN_SISTEM": [
+    "program.view",
+    "program.create",
+    "program.update",
+    "program.delete",
+    "donation.view",
+    "donation.verify",
+    "donation.proof.manage",
+    "donor.view",
+    "report.view",
+    "report.export",
+    "summary.view",
+    "recipient.view",
+    "assistance.view",
+    "assistance.verify",
+    "assistance.decide",
+    "assistance.distribute",
+    "user.view",
+    "user.create",
+    "user.update",
+    "user.delete",
+    "user.password.reset",
+    "user.role.assign"
+  ],
+  "PIMPINAN": [
+    "program.view",
+    "program.create",
+    "program.update",
+    "program.delete",
+    "donation.view",
+    "report.view",
+    "report.export",
+    "summary.view",
+    "recipient.view",
+    "assistance.view",
+    "assistance.verify",
+    "assistance.decide"
+  ],
+  "ADMINISTRASI_KEUANGAN": [
+    "program.view",
+    "donation.view",
+    "donation.verify",
+    "donation.proof.manage",
+    "donor.view",
+    "report.view",
+    "report.export",
+    "summary.view",
+    "recipient.view",
+    "assistance.view"
+  ],
+  "PENGURUS_OPERASIONAL": [
+    "program.view",
+    "program.create",
+    "program.update",
+    "program.delete",
+    "report.view",
+    "report.export",
+    "summary.view",
+    "recipient.view",
+    "assistance.view",
+    "assistance.verify",
+    "assistance.decide",
+    "assistance.distribute"
+  ],
+  "DONATUR": [
+    "program.view",
+    "donation.view",
+    "donation.create",
+    "donation.proof.upload"
+  ],
+  "PEMOHON_BANTUAN": [
+    "program.view",
+    "assistance.create",
+    "assistance.cancel",
+    "assistance.view",
+    "assistance.received.view"
+  ]
+}).map(([group, permissions]) => [group, Object.freeze(permissions)])));
+export const PERMISSION_ROLES = Object.freeze(Object.fromEntries(["program.view","program.create","program.update","program.delete","donation.view","donation.verify","donation.proof.manage","donor.view","donation.create","donation.proof.upload","report.view","report.export","summary.view","recipient.view","assistance.create","assistance.cancel","assistance.view","assistance.verify","assistance.decide","assistance.distribute","assistance.received.view","user.view","user.create","user.update","user.delete","user.password.reset","user.role.assign","publication.manage"].map(permission => [permission, Object.freeze(Object.entries(ROLE_GROUPS).filter(([group]) => GROUP_PERMISSIONS[group].includes(permission)).flatMap(([, roles]) => roles))])));
+const PERMISSION_ALIASES = Object.freeze({
+  "LIHAT_RINGKASAN": "summary.view",
+  "KELOLA_PROGRAM": "program.create",
+  "VERIFIKASI_DONASI": "donation.verify",
+  "LIHAT_DONASI": "donation.view",
+  "LIHAT_DONATUR": "donor.view",
+  "LIHAT_PENERIMA": "recipient.view",
+  "KELOLA_PENERIMA": "assistance.verify",
+  "LIHAT_PENGAJUAN": "assistance.view",
+  "VERIFIKASI_PENGAJUAN": "assistance.decide",
+  "KELOLA_PENYALURAN": "assistance.distribute",
+  "LIHAT_LAPORAN": "report.view",
+  "KELOLA_PENGGUNA": "user.view"
+});
+const PERMISSIONS = Object.freeze({ ...PERMISSION_ROLES, ...Object.fromEntries(Object.entries(PERMISSION_ALIASES).map(([name, target]) => [name, PERMISSION_ROLES[target]])) });
 export function can(role, permission) {
-  if (!role) return false;
-  if (FULL_ACCESS_ROLES.includes(role)) return true;
-  return (PERMISSIONS[permission] || []).includes(role);
+  return Boolean(role && Object.prototype.hasOwnProperty.call(PERMISSIONS, permission) && PERMISSIONS[permission].includes(role));
 }
+export function isStaffRole(role) { return STAFF_ROLES.includes(role); }
 
 // Menu panel pengurus dan hak aksesnya.
 export const MENU_PERMISSION = {
@@ -75,19 +172,11 @@ export const MENU_PERMISSION = {
 };
 
 // Menu awal yang paling relevan untuk setiap role saat membuka /admin
-const DEFAULT_MENU_BY_ROLE = {
-  ADMIN_SISTEM: "verifikasi",
-  BIDANG_INFORMATIKA: "pengurus",
-  KETUA: "program",
-  HUMAS: "program",
-  BENDAHARA: "donasi",
-  SEKRETARIS: "pengajuan",
-  BIDANG_SOSIAL: "verifikasi",
-  BIDANG_PENDIDIKAN: "verifikasi",
-  BIDANG_KESEHATAN: "verifikasi",
-  PENGAWAS: "laporan",
-  PEMBINA: "laporan",
+const DEFAULT_MENU_BY_GROUP = {
+  ADMIN_SISTEM: "pengurus", PIMPINAN: "program", ADMINISTRASI_KEUANGAN: "donasi",
+  PENGURUS_OPERASIONAL: "program",
 };
+const DEFAULT_MENU_BY_ROLE = Object.fromEntries(Object.entries(ROLE_GROUPS).flatMap(([group, roles]) => roles.map(role => [role, DEFAULT_MENU_BY_GROUP[group]])));
 
 export function canSeeMenu(role, menu) {
   return can(role, MENU_PERMISSION[menu]);

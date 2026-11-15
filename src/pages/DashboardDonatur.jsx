@@ -1,3 +1,4 @@
+import PaginatedTable from "../components/PaginatedTable";
 import { useEffect, useState, useRef } from "react";
 import { Dialog } from "../components/PublicUI";
 import API from "../services/api";
@@ -270,7 +271,7 @@ export default function DashboardDonatur() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600">
+                <PaginatedTable><table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 uppercase font-black text-[10px] tracking-wider">
                     <tr>
                       <th className="p-4">Tanggal</th>
@@ -326,7 +327,7 @@ export default function DashboardDonatur() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></PaginatedTable>
               </div>
             )}
           </div>

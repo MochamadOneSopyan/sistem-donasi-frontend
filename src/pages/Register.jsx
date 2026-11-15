@@ -47,7 +47,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await API.post("/auth/register", {
+      const response = await API.post("/auth/register", {
         nama: formData.nama,
         email: formData.email,
         password: formData.password,
@@ -57,7 +57,7 @@ export default function Register() {
         alasan: formData.alasan,
       });
 
-      navigate("/login", { state: { message: "Pendaftaran akun berhasil. Silakan masuk dengan akun Anda." } });
+      navigate("/login", { state: { message: response.data?.message || (formData.role === "PENERIMA_BANTUAN" ? "Pendaftaran berhasil. Akun penerima menunggu persetujuan pengurus sebelum dapat masuk." : "Pendaftaran akun berhasil. Silakan masuk dengan akun Anda.") } });
     } catch (err) {
       setError(
         err.response?.data?.message ||

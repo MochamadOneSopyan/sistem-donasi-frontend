@@ -292,6 +292,12 @@
 .footer-links a:hover { color: #fff; text-decoration: underline; }
 .footer-socials { display: flex; gap: 10px; margin-top: 10px; }
 .footer-socials a { min-width: 40px; min-height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #ffffff20; border-radius: 50%; }
+.footer-address { margin-top: 20px; }
+.footer-address address { font-size: 13px; font-style: normal; line-height: 1.7; }
+.footer-address a { overflow-wrap: anywhere; }
+.footer-address a svg { display: inline-block; margin-left: 4px; vertical-align: middle; }
+.footer-address a:hover { color: #fff; text-decoration: underline; }
+.footer-address a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 2px; }
 .footer-bank { border-top: 1px solid #ffffff20; padding-top: 10px; margin-top: 10px; font-size: 12px; }
 .footer-bank strong { display: block; font-size: 18px; color: var(--brand-gold); }
 .footer-bottom { border-top: 1px solid #ffffff20; margin-top: 16px; padding-top: 12px; font-size: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
@@ -323,6 +329,18 @@
 .donation-dialog [class*="bg-[#3c096c]"] { background: #fff; border-color: var(--line); }
 .public-navbar--inner > nav { background: #ffffffed; border-color: var(--line); }
 .public-navbar--inner .navbar-container { max-width: 1440px; }
+/* Keep the navigation inside its grid column when account actions need more room. */
+.public-navbar .navbar-desktop-menu {
+  width: max-content;
+  justify-self: center;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.public-navbar .navbar-desktop-menu::-webkit-scrollbar { display: none; }
+.public-navbar .navbar-desktop-menu > * { flex-shrink: 0; white-space: nowrap; }
+.public-navbar .navbar-actions { min-width: max-content; }
+
 .public-navbar--inner .ios-segmented-track { background: #f2f7f4; border-color: var(--line); box-shadow: none; }
 .public-navbar--inner .ios-btn-amber { background: var(--brand-orange) !important; color: #fff !important; box-shadow: none !important; }
 @media (min-width: 1000px) and (max-height: 720px) {
@@ -427,3 +445,19 @@
 .donation-dialog [class*="bg-gradient"] h3 { color: #fff; }
 .member-page .text-slate-400, .member-modal .text-slate-400, .donation-dialog .text-slate-400 { color: #62796c; }
 .public-navbar--inner .navbar-role[aria-current="page"] { background: var(--brand-forest); color: #fff; }
+
+.skip-navigation { position: fixed; top: 8px; left: 12px; z-index: 1000; transform: translateY(-180%); padding: 12px 18px; border-radius: 12px; background: #064e3b; color: white; font-weight: 700; }
+.skip-navigation:focus { transform: translateY(0); outline: 3px solid #e08a3c; }
+.table-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px; border-top: 1px solid #e2e8f0; color: #475569; font-size: 12px; }
+.table-pagination > div { display: flex; gap: 8px; }
+.table-pagination button { min-height: 44px; padding: 8px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: white; color: #064e3b; font-weight: 600; }
+.table-pagination button:disabled { opacity: .45; cursor: not-allowed; }
+.table-pagination button:focus-visible { outline: 3px solid #e08a3c; outline-offset: 2px; }
+
+.paginated-table-scroll { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: thin; scrollbar-color: #8db9a5 #f2f7f4; }
+.paginated-table-scroll:focus-visible { outline: 2px solid #0e5444; outline-offset: -2px; }
+.table-pagination { width: 100%; box-sizing: border-box; background: #fff; }
+@media (max-width: 479px) {
+  .table-pagination > div { width: 100%; }
+  .table-pagination button { flex: 1; padding-inline: 10px; }
+}

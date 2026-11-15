@@ -1,3 +1,4 @@
+import { getStoredUser } from "../utils/format";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { LogIn, User, LogOut, Menu, X, HandHeart } from "lucide-react";
@@ -5,7 +6,7 @@ import logoYayasan from "../assets/logo-yayasan.png";
 import { publicNavigationItems } from "../data/publicNavigation";
 import { getAvatarUrl } from "../utils/imageCompressor";
 import { scrollToPublicSection } from "../utils/scrollToPublicSection";
-import { isStaffRole } from "../utils/roles";
+import { homePathFor, isStaffRole } from "../utils/roles";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -19,7 +20,7 @@ export default function Navbar() {
   const isHome = location.pathname === "/";
 
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getStoredUser();
   // Render ulang saat profil diperbarui (nama di navbar langsung berubah)
   const [, setUserVersion] = useState(0);
   useEffect(() => {
@@ -128,7 +129,7 @@ export default function Navbar() {
               : "bg-white border-slate-100"
           }`}
         >
-          <div className="navbar-container w-full max-w-7xl mx-auto h-[80px] px-4 sm:px-8 flex justify-between items-center gap-3 xl:grid xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <div className="navbar-container w-full max-w-7xl mx-auto h-[80px] px-4 sm:px-8 flex justify-between items-center gap-3 xl:grid xl:grid-cols-[auto_minmax(0,1fr)_auto]">
             {/* Logo & Nama Yayasan (Satu Warna Konsisten Hijau Lembaga & Animasi Menarik) */}
             <Link
               to="/"
@@ -156,7 +157,7 @@ export default function Navbar() {
             </Link>
 
             {/* Menu Navigasi Desktop (Apple iOS Segmented Control Track dengan Spring Physics) */}
-            <div className="hidden xl:flex shrink-0 items-center ios-segmented-track text-xs font-semibold text-slate-600">
+            <div className="navbar-desktop-menu hidden xl:flex min-w-0 items-center ios-segmented-track text-xs font-semibold text-slate-600">
               {publicNavigationItems.map((item) => {
                 const isActive = isHome && activeSection === item.id;
                 const isClicked = clickedItem === item.id;
@@ -177,43 +178,13 @@ export default function Navbar() {
                   </button>
                 );
               })}
-
-              {isStaffRole(user.role) && (
-                <Link
-                  to="/admin"
-                aria-current={location.pathname === "/admin" ? "page" : undefined}
-                  className="navbar-role ios-segment-item text-emerald-800 font-bold bg-emerald-100/70 px-3.5 py-1.5 rounded-full hover:bg-emerald-100 ml-1"
-                >
-                  Dashboard Admin
-                </Link>
-              )}
-
-              {user.role === "DONATUR" && (
-                <Link
-                  to="/donatur"
-                aria-current={location.pathname === "/donatur" ? "page" : undefined}
-                  className="navbar-role ios-segment-item text-emerald-800 font-bold bg-emerald-100/70 px-3.5 py-1.5 rounded-full hover:bg-emerald-100 ml-1"
-                >
-                  Riwayat Donasi
-                </Link>
-              )}
-
-              {user.role === "PENERIMA_BANTUAN" && (
-                <Link
-                  to="/penerima"
-                aria-current={location.pathname === "/penerima" ? "page" : undefined}
-                  className="navbar-role ios-segment-item text-emerald-800 font-bold bg-emerald-100/70 px-3.5 py-1.5 rounded-full hover:bg-emerald-100 ml-1"
-                >
-                  Status Bantuan
-                </Link>
-              )}
             </div>
 
             {/* Tombol Aksi Desktop (Masuk / User Profile / Donasi Sekarang dengan Apple iOS Button Style) */}
-            <div className="hidden sm:flex shrink-0 items-center gap-2.5 xl:justify-self-end">
+            <div className="navbar-actions hidden sm:flex shrink-0 items-center gap-2.5 xl:justify-self-end">
               {token ? (
                 <div className="flex items-center gap-2">
-                  <span className="navbar-account text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-2xs">
+                  <Link to={homePathFor(user.role)} title="Buka dashboard" className="navbar-account text-xs font-bold text-slate-800 bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-2xs">
                     {user.fotoProfil ? (
                       <img
                         src={getAvatarUrl(user.fotoProfil)}
@@ -226,7 +197,7 @@ export default function Navbar() {
                     <span className="max-w-[100px] truncate">
                       {user.nama || "User"}
                     </span>
-                  </span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="ios-btn p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full cursor-pointer"

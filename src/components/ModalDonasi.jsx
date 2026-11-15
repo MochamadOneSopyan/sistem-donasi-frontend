@@ -1,3 +1,4 @@
+import { getStoredUser } from "../utils/format";
 import { useRef, useState } from "react";
 import { Dialog } from "./PublicUI";
 import API from "../services/api";
@@ -51,7 +52,7 @@ export default function ModalDonasi({
   const nominalPilihan = [20000, 50000, 100000, 200000, 500000];
   const MIN_NOMINAL = 10000;
   const MAX_NOMINAL = 1000000000;
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const user = getStoredUser();
 
   const [uploadingBukti, setUploadingBukti] = useState(false);
 
